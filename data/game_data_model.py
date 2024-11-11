@@ -27,7 +27,11 @@ class TeamData:
         return self.team_score, self.team_features
     
     def get_csv_data(self):
-        return [self.game_id, self.date, self.team_id, self.team_name] + [self.team_score] + self.team_features
+        vals = [self.game_id, self.date, self.team_id, self.team_name] + [self.team_score] + self.team_features
+        # Convert all to str
+        for i in range(len(vals)):
+            vals[i] = str(vals[i])
+        return vals
     
 
 def csv_to_teamdata(row):

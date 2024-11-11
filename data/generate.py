@@ -1,6 +1,7 @@
 import os
 import concurrent.futures
 import time
+import requests
 import statsapi
 from tqdm import tqdm
 
@@ -9,7 +10,8 @@ from .pitching import get_pitcher_stats
 from .game_data_model import BaseballGameData, TeamData, csv_to_teamdata
 from .statsapi_utils import get_date, team_info
 
-COOLDOWN_TIME = 3
+COOLDOWN_TIME = 10
+REQUESTS_ERROR_RETRY = 10
 
 """
 Other ideas:
@@ -70,11 +72,23 @@ def season_data(year) -> list[BaseballGameData]:
             game_ids.append(game["game_id"])
         del games
     print(f"Found {len(game_ids)} games in {time.time()-start} seconds")
-
+    time.sleep(COOLDOWN_TIME)
     start = time.time()
     for game_id in tqdm(game_ids):
-        game_data.append(generate_data(game_id, year))
-        time.sleep(2)
+        retries = 0
+        while retries < REQUESTS_ERROR_RETRY:
+            try:
+                game_data.append(generate_data(game_id, year))
+                break
+            except requests.exceptions.RequestException as e:
+                retries += 1
+                print(f"Retrying {game_id} due to requests error: {e}")
+                time.sleep(COOLDOWN_TIME*4)
+            except Exception as e:
+                retries += 1
+                print(f"Retrying {game_id} due to unknown error: {e}")
+                time.sleep(COOLDOWN_TIME*4)
+        time.sleep(COOLDOWN_TIME)
     print(f"Generated {len(game_data)} games worth of data in {time.time()-start} seconds")
     return game_data
 
@@ -95,3 +109,4 @@ if __name__ == '__main__':
     years = ['2021', '2022', '2023', '2024']
     for year in years:
         process_year(year)
+        time.sleep(COOLDOWN_TIME*10)
