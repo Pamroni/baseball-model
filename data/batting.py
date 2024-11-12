@@ -38,7 +38,7 @@ BATTER_STATS = [
     "atBatsPerHomeRun",
 ]
 
-ZERO_VALUES = ['.---', '-.--']
+ZERO_VALUES = ['.---', '-.--', '-']
 def get_batter_stats(player_id, game_date, year, last_x=5):
     season_start_date = f"01/01/{year}"
     end_date = datetime.strptime(game_date, "%m/%d/%Y")

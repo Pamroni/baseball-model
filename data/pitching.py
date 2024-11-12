@@ -65,7 +65,7 @@ PITCHER_STATS = [
     "sacFlies",
 ]
 
-ZERO_VALUES = [".---", "-.--"]
+ZERO_VALUES = [".---", "-.--", "-"]
 
 
 def get_pitcher_stats(player_id, game_date, year, last_x=5):
