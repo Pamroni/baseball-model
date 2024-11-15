@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from .batting import get_batter_stats
 from .pitching import get_pitcher_stats
-from .game_data_model import BaseballGameData, TeamData, csv_to_teamdata
+from .baseball_data_model import BaseballGameData, TeamData, csv_to_teamdata
 from .statsapi_utils import get_date, team_info
 
 COOLDOWN_TIME = 1
