@@ -10,7 +10,7 @@ from .pitching import get_pitcher_stats
 from .game_data_model import BaseballGameData, TeamData, csv_to_teamdata
 from .statsapi_utils import get_date, team_info
 
-COOLDOWN_TIME = 10
+COOLDOWN_TIME = 1
 REQUESTS_ERROR_RETRY = 10
 
 """
@@ -105,8 +105,25 @@ def process_year(year):
     print(f"Generated {len(game_data)} games worth of data, writing to {filename}")
     write_to_csv(game_data, filename)
 
+"""
+2021 missed values:
+Retrying 632457 due to unknown error: list index out of range
+Retrying 633468 due to unknown error: could not convert string to float: '-'
+
+2022 missed values:
+Retrying 707079 due to unknown error: list index out of range
+Retrying 706920 due to unknown error: list index out of range
+Retrying 706953 due to unknown error: list index out of range
+
+2023 missed values:
+none 
+
+2024 missed values:
+Retrying 746577 due to unknown error: list index out of range
+
+"""
 if __name__ == '__main__':
-    years = ['2021', '2022', '2023', '2024']
+    years = ['2022', '2023', '2024']
     for year in years:
         process_year(year)
         time.sleep(COOLDOWN_TIME*10)
