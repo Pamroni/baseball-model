@@ -74,16 +74,20 @@ def get_pitcher_stats(player_id, game_date, year, last_x=5):
     last_x_start_date = (end_date - timedelta(days=last_x)).strftime("%m/%d/%Y")
 
     player_season_stats = statsapi.player_stat_data(
-        player_id, group="[pitching]", type=f"[byDateRange],startDate={season_start_date},endDate={game_date},currentTeam"
+        player_id,
+        group="[pitching]",
+        type=f"[byDateRange],startDate={season_start_date},endDate={game_date},currentTeam",
     )["stats"]
     player_last_x_dates_stats = statsapi.player_stat_data(
-        player_id, group="[pitching]", type=f"[byDateRange],startDate={last_x_start_date},endDate={game_date},currentTeam"
+        player_id,
+        group="[pitching]",
+        type=f"[byDateRange],startDate={last_x_start_date},endDate={game_date},currentTeam",
     )["stats"]
     season = {}
     last_x_pitching = {}
     if len(player_season_stats) > 0:
         season = player_season_stats[0]["stats"]
-    
+
     if len(player_last_x_dates_stats) > 0:
         last_x_pitching = player_last_x_dates_stats[0]["stats"]
 
