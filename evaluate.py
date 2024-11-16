@@ -71,7 +71,7 @@ def check_winner(results: list[TeamScore], verbose=False):
         print(
             f"MISS for {results[0].date}: \n\
             Predicted Winner=[{results[predicted_winner].team_name}, Score:[{results[predicted_winner].predicted_score}vs{results[predicted_loser].predicted_score}]]\n\
-            Actual Winner=[{results[actual_winner].team_name}, Score: [{results[actual_winner].score}vs{results[actual_loser].score}]]\n\n\n"
+            Actual Winner=[{results[actual_winner].team_name}, Score: [{results[actual_winner].score}vs{results[actual_loser].score}]]\n\n"
         )
     return correct
 
