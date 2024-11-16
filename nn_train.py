@@ -1,13 +1,15 @@
 import torch
+from tqdm import tqdm
 from torch import nn, optim
-from torch.utils.data import Dataset, DataLoader, random_split
+from torch.utils.data import DataLoader, random_split
+from evaluate import evaluate
 
 import argparse
 from data.baseball_dataset import BaseballDataset
-from data.baseball_data_loader import BaseballDataLoader
-from data.baseball_data_model import BaseballGameData, TeamData
 
 from nn_model import BaseballModel
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def train(args):
@@ -29,7 +31,6 @@ def train(args):
 
     # Create DataLoader objects
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    eval_loader = DataLoader(eval_dataset, batch_size=args.batch_size, shuffle=False)
 
     # Get input size
     input_size = train_dataset[0][0].shape[0]
@@ -37,8 +38,8 @@ def train(args):
 
     # Initialize model
     model = BaseballModel(
-        input_size=input_size, output_size=output_size, layers=args.layers
-    )
+        in_features=input_size, out_features=output_size, layers=args.layers
+    ).to(device)
 
     # Set up loss function
     if args.loss.lower() == "mse":
@@ -47,6 +48,7 @@ def train(args):
         criterion = nn.BCELoss()
     else:
         raise ValueError(f"Unsupported loss function: {args.loss}")
+    criterion = criterion.to(device)
 
     # Set up optimizer
     if args.optimizer.lower() == "adam":
@@ -57,12 +59,13 @@ def train(args):
         raise ValueError(f"Unsupported optimizer: {args.optimizer}")
 
     # Training loop
-    for epoch in range(args.epochs):
+    for epoch in tqdm(range(args.epochs)):
         model.train()
         total_loss = 0
         for batch_X, batch_y in train_loader:
+            batch_X, batch_y = batch_X.to(device), batch_y.to(device)
             optimizer.zero_grad()
-            outputs = model(batch_X).squeeze()
+            outputs = model(batch_X).squeeze().to(device)
             loss = criterion(outputs, batch_y)
             loss.backward()
             optimizer.step()
@@ -70,22 +73,11 @@ def train(args):
         avg_loss = total_loss / len(train_loader)
         print(f"Epoch [{epoch+1}/{args.epochs}], Training Loss: {avg_loss:.4f}")
 
-        # Evaluation on validation set
-        model.eval()
-        with torch.no_grad():
-            eval_loss = 0
-            for batch_X, batch_y in eval_loader:
-                outputs = model(batch_X).squeeze()
-                loss = criterion(outputs, batch_y)
-                eval_loss += loss.item()
-            avg_eval_loss = eval_loss / len(eval_loader)
-            print(
-                f"Epoch [{epoch+1}/{args.epochs}], Validation Loss: {avg_eval_loss:.4f}"
-            )
-
     # Save the model
     torch.save(model.state_dict(), args.model_path)
     print(f"Model saved to {args.model_path}")
+    # Evaluate the model
+    evaluate(model, args.eval_data)
 
 
 if __name__ == "__main__":
@@ -162,7 +154,7 @@ if __name__ == "__main__":
         "--model_path",
         type=str,
         help="Path to save the trained model",
-        default="./models/baseball_nn.th",
+        default="./trained_models/baseball_nn.th",
     )
     args = parser.parse_args()
     train(args)
