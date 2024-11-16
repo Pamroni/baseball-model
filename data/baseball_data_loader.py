@@ -4,6 +4,7 @@ from typing import List, Tuple
 from sklearn.model_selection import train_test_split
 from .baseball_data_model import TeamData, csv_to_teamdata
 
+
 class BaseballDataLoader:
     def __init__(self, data_paths: List[str]):
         self.data_paths = data_paths  # List of CSV file paths
@@ -11,7 +12,7 @@ class BaseballDataLoader:
     def load_data(self) -> List[TeamData]:
         team_data_list = []
         for path in self.data_paths:
-            with open(path, 'r') as csvfile:
+            with open(path, "r") as csvfile:
                 reader = csv.reader(csvfile)
                 for row in reader:
                     team_data = csv_to_teamdata(row)
