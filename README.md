@@ -8,6 +8,8 @@ Prior to working, it's strongly advise to use a Python virtual environment. All 
 2. `source ./.venv/bin/activate` or for windows, `.\.venv\scripts\activate`
 3. `pip install -r requirements.txt`
 
+Of note, there's quite a few requirements. These are required to have properly working XGBoost and Torch based NN
+
 ## Generating Data
 Features can be updated and modified in the respective files:
 - `data/batting.py` for batting data
