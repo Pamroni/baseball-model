@@ -34,3 +34,10 @@ class BaseballModel(torch.nn.Module, BaseballModel):
 
 def save_model(model, path):
     torch.save(model.state_dict(), path)
+
+
+def load_model(path, in_features, out_features, layers=[256, 512, 1024, 2048]):
+    model = BaseballModel(in_features, out_features, layers)
+    model.load_state_dict(torch.load(path))
+    model.to(device)
+    return model

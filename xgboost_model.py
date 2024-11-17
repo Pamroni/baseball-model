@@ -1,4 +1,5 @@
 import json
+import xgboost as xgb
 from model import BaseballModel
 
 PARAM_PATH = "./trained_models/xgb_hyper_params.json"
@@ -17,6 +18,12 @@ def load_hyperparameters(path=PARAM_PATH):
 class XBGBaseballModel(BaseballModel):
     def __init__(self, model):
         self.model = model
+
+    @staticmethod
+    def from_path(path):
+        model = xgb.XGBRegressor()
+        model.load_model(path)
+        return XBGBaseballModel(model)
 
     def predict(self, features) -> float:
         features = [features]

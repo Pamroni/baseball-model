@@ -46,9 +46,7 @@ def get_hyperparameters(model, X_train, y_train):
     }
     print(f"Searching for the best hyperparameters from the grid: {param_grid}")
     start = time.time()
-    search = GridSearchCV(
-        model, param_grid, scoring="accuracy", cv=3, n_jobs=-1, verbose=1
-    )
+    search = GridSearchCV(model, param_grid, cv=3, n_jobs=-1, verbose=1)
     search.fit(X_train, y_train)  # This will take a while, CUDA not supported for this
     print(f"Search took {time.time() - start} seconds")
     print("The best hyperparameters are ", search.best_params_)
@@ -57,6 +55,7 @@ def get_hyperparameters(model, X_train, y_train):
 
 
 def train(args):
+    print(f"Training with args: {args}")
     if args.full_data:
         data = BaseballDataLoader(args.full_data)
         X, y = data.get_training_data()
