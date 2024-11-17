@@ -1,7 +1,7 @@
 import os
 import csv
 from typing import List, Tuple
-from sklearn.model_selection import train_test_split
+import numpy as np
 from .baseball_data_model import TeamData, csv_to_teamdata
 
 
@@ -30,4 +30,5 @@ class BaseballDataLoader:
             features = [float(f) for f in features]
             X.append(features)
             y.append(label)
-        return X, y
+
+        return np.array(X, dtype=float), np.array(y, dtype=float)

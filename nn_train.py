@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader, random_split
 from evaluate import evaluate
 
 import argparse
-from data.baseball_dataset import BaseballDataset
+from data.baseball_pytorch_dataset import BaseballDataset
 
 from nn_model import BaseballModel
 

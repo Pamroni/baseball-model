@@ -16,6 +16,11 @@ REQUESTS_ERROR_RETRY = 10
 """
 Other ideas:
 gameData["weather"] - use environmental data
+
+Pitching matchups vs opp st pitcher
+hydrate = 'stats(group=[hitting],type=[vsPlayer],opposingPlayerId={},season=2019,sportId=1)'.format(opponentId)
+
+
 """
 
 

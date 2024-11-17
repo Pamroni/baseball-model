@@ -1,1 +1,7 @@
 https://fisher.wharton.upenn.edu/wp-content/uploads/2020/09/Thesis_Andrew-Cui.pdf
+
+https://arxiv.org/abs/1603.02754
+
+
+https://machinelearningmastery.com/develop-first-xgboost-model-python-scikit-learn/
+
