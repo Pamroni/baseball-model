@@ -32,21 +32,28 @@ https://xgboost.readthedocs.io/en/latest/gpu/
 
 https://rapids.ai
 
+https://medium.com/@rithpansanga/the-main-parameters-in-xgboost-and-their-effects-on-model-performance-4f9833cac7c
+
 """
 device = "cuda" if is_available() else "cpu"
 
 
 def get_hyperparameters(model, X_train, y_train):
     param_grid = {
-        "max_depth": [4, 5, 6, 7, 8, 9, 10],
-        "n_estimators": [300, 400, 500, 600, 700, 800, 900, 1000],
-        "learning_rate": [0.1, 0.05, 0.01],
-        "subsample": [0.6, 0.7, 0.8, 0.9, 1],
-        "colsample_bytree": [0.6, 0.7, 0.8, 0.9, 1],
+        "max_depth": [5],
+        "n_estimators": [1500],
+        "learning_rate": [0.01],
+        "subsample": [0.4, 0.5, 0.6],
+        "colsample_bytree": [0.9],
+        "gamma": [0, 0.1, 0.5, 1],
+        "min_child_weight": [1, 3, 5],
+        "reg_alpha": [0, 0.01, 0.1],
+        "reg_lambda": [1, 10, 100],
+        "grow_policy": ["depthwise", "lossguide"],
     }
     print(f"Searching for the best hyperparameters from the grid: {param_grid}")
     start = time.time()
-    search = GridSearchCV(model, param_grid, cv=3, n_jobs=-1, verbose=1)
+    search = GridSearchCV(model, param_grid, cv=3, n_jobs=-1, verbose=3)
     search.fit(X_train, y_train)  # This will take a while, CUDA not supported for this
     print(f"Search took {time.time() - start} seconds")
     print("The best hyperparameters are ", search.best_params_)
@@ -130,7 +137,7 @@ if __name__ == "__main__":
         "--find_hyperparameters",
         action="store_true",
         help="Find the best hyperparameters for the model",
-        default=True,
+        default=False,
     )
 
     # Boring stuff

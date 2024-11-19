@@ -1,7 +1,7 @@
 import torch
 import os
 import csv
-from data.baseball_data_model import csv_to_teamdata
+from data.baseball_data_model import csv_to_teamdata, TeamData
 from model import BaseballModel
 
 
@@ -14,7 +14,7 @@ class GameResultData:
         with open(data_path, "r") as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
-                team_data = csv_to_teamdata(row)
+                team_data: TeamData = csv_to_teamdata(row)
 
                 # check if game id is in self.games
                 game_id = team_data.game_id
