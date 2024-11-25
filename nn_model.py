@@ -11,6 +11,7 @@ class BaseballModel(torch.nn.Module, BaseballModel):
         model_layers = []
         for i in range(len(layers)):
             model_layers.append(torch.nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
+            model_layers.append(torch.nn.BatchNorm1d(layer_sizes[i + 1]))
             model_layers.append(torch.nn.ReLU())
 
         # Classifiation layer
@@ -24,6 +25,8 @@ class BaseballModel(torch.nn.Module, BaseballModel):
     def predict(self, features) -> float:
         # Convert feature to float torch
         features = torch.tensor(features, dtype=torch.float32).to(device)
+        # Squeeze and add a fake batch dim
+        features = features.unsqueeze(0)
         torch_result = self.forward(features)
         return torch_result.item()
 

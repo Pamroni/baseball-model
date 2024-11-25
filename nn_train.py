@@ -20,6 +20,7 @@ def train(args):
         train_size = int(0.8 * len(dataset))
         eval_size = len(dataset) - train_size
         train_dataset, eval_dataset = random_split(dataset, [train_size, eval_size])
+        print(f"Using full dataset: {args.full_data}")
     else:
         # Check if training and eval data are provided
         if not args.training_data or not args.eval_data:
@@ -31,6 +32,7 @@ def train(args):
 
     # Create DataLoader objects
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    eval_loader = DataLoader(eval_dataset, batch_size=args.batch_size, shuffle=False)
 
     # Get input size
     input_size = train_dataset[0][0].shape[0]
@@ -68,10 +70,24 @@ def train(args):
             outputs = model(batch_X).squeeze().to(device)
             loss = criterion(outputs, batch_y)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
             optimizer.step()
             total_loss += loss.item()
         avg_loss = total_loss / len(train_loader)
         print(f"Epoch [{epoch+1}/{args.epochs}], Training Loss: {avg_loss:.4f}")
+
+    # Evaluate on the eval data
+    with torch.no_grad():
+        model.eval()
+        total_loss = 0
+        for batch_X, batch_y in eval_loader:
+            batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+            outputs = model(batch_X).squeeze().to(device)
+            loss = criterion(outputs, batch_y)
+            total_loss += loss.item()
+        avg_loss = total_loss / len(eval_loader)
+        print(f"Avg Eval Loss: {avg_loss:.4f}")
 
     # Save the model
     torch.save(model.state_dict(), args.model_path)
@@ -96,14 +112,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=32,
+        default=256,
         help="Number of samples in each batch",
     )
 
     parser.add_argument(
         "--learning_rate",
         type=float,
-        default=0.001,
+        default=0.01,
         help="Learning rate for the optimizer",
     )
 
@@ -125,7 +141,11 @@ if __name__ == "__main__":
         "--layers",
         type=int,
         nargs="+",
-        default=[256, 512, 1024, 2048],
+        # default=[2048, 1024, 512, 256],
+        # default=[256, 512, 1024, 2048],
+        # default=[256, 512, 1024, 2048, 4096],
+        # default=[256, 512, 1024, 2048, 4096, 8192],
+        default=[470, 350, 200],
         help="Sizes of hidden layers in the neural network",
     )
 
@@ -135,12 +155,18 @@ if __name__ == "__main__":
         type=str,
         nargs="+",
         help="Paths to CSV files containing baseball data for training",
+        default=[
+            "./csv_data/2021_data.csv",
+            "./csv_data/2022_data.csv",
+            "./csv_data/2023_data.csv",
+        ],
     )
     parser.add_argument(
         "--eval_data",
         type=str,
         nargs="+",
         help="Paths to CSV files containing baseball data for evaluation",
+        default=["./csv_data/2024_data.csv"],
     )
     parser.add_argument(
         "--full_data",
