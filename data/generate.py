@@ -1,3 +1,4 @@
+import concurrent.futures
 import time
 import requests
 import statsapi
@@ -154,7 +155,7 @@ def write_to_csv(game_data: list[BaseballGameData], filename):
 
 
 def process_year(year):
-    filename = f"csv_data/{year}_data.csv"
+    filename = f"csv_data/fixed_{year}_data.csv"
     print(f"Generating data for {year}")
     game_data = season_data(year)
     print(f"Generated {len(game_data)} games worth of data, writing to {filename}")
@@ -180,6 +181,5 @@ Retrying 746577 due to unknown error: list index out of range
 """
 if __name__ == "__main__":
     years = ["2019", "2021", "2022", "2023", "2024"]
-    for year in years:
-        process_year(year)
-        time.sleep(COOLDOWN_TIME * 10)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.map(process_year, years)
