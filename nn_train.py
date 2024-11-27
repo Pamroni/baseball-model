@@ -6,6 +6,7 @@ from evaluate import evaluate
 
 import argparse
 from data.baseball_pytorch_dataset import BaseballDataset
+from sklearn.metrics import r2_score
 
 from nn_model import BaseballModel
 
@@ -81,13 +82,26 @@ def train(args):
     with torch.no_grad():
         model.eval()
         total_loss = 0
+        all_predictions = []
+        all_targets = []
+
         for batch_X, batch_y in eval_loader:
             batch_X, batch_y = batch_X.to(device), batch_y.to(device)
-            outputs = model(batch_X).squeeze().to(device)
+            outputs = model(batch_X).squeeze()
             loss = criterion(outputs, batch_y)
             total_loss += loss.item()
+
+            # Store predictions and targets for R^2 calculation
+            all_predictions.append(outputs.cpu())
+            all_targets.append(batch_y.cpu())
+
         avg_loss = total_loss / len(eval_loader)
         print(f"Avg Eval Loss: {avg_loss:.4f}")
+
+        all_predictions = torch.cat(all_predictions).numpy()
+        all_targets = torch.cat(all_targets).numpy()
+        r2 = r2_score(all_targets, all_predictions)
+        print(f"R^2 Score: {r2:.4f}")
 
     # Save the model
     torch.save(model.state_dict(), args.model_path)

@@ -107,4 +107,12 @@ def get_pitcher_stats(player_id, game_date, year, last_x=5):
             last_x_val = 0.0
         features.append(float(last_x_val))
 
-    return features
+    # Get feature names
+    feature_names = []
+    prefix_list = ["season", f"last_{last_x}_days"]
+    for prefix in prefix_list:
+        for key in PITCHER_STATS:
+            name = f"pitcher_{prefix}_{key}"
+            feature_names.append(name)    
+
+    return features, feature_names

@@ -1,8 +1,12 @@
 import os
 import argparse
+
 import xgboost as xgb
 import time
-import cupy as cp
+import matplotlib.pyplot as plt
+from xgboost import plot_importance
+
+import numpy as np
 from torch.cuda import is_available
 from xgboost_model import (
     XBGBaseballModel,
@@ -12,7 +16,9 @@ from xgboost_model import (
 )
 from evaluate import evaluate
 from data.baseball_data_loader import BaseballDataLoader
+from data.baseball_data_model import get_feature_names
 from cuml.model_selection import GridSearchCV, train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
 
 """
 from sklearn.model_selection import GridSearchCV
@@ -72,6 +78,7 @@ def train(args):
         train_data = BaseballDataLoader(args.training_data)
         X_train, y_train = train_data.get_training_data()
         eval_data = BaseballDataLoader(args.eval_data)
+        X_eval, y_eval = eval_data.get_training_data()
 
     print(f"Training samples: {len(X_train)}")
 
@@ -93,12 +100,27 @@ def train(args):
         y_train,
         verbose=True,
     )
+    # model.feature_names_in_ = feature_names
     print(f"Training took {time.time() - start} seconds")
+
+    # Evalualte model
+    y_pred = model.predict(X_eval)
+    r2 = r2_score(y_eval, y_pred)
+    mse = mean_squared_error(y_eval, y_pred)
+    rmse = np.sqrt(mse)
+    print(f"R2: {r2}, MSE: {mse}, RMSE: {rmse}")
 
     # Save the model
     os.makedirs(os.path.dirname(args.model_path), exist_ok=True)
     model.save_model(args.model_path)
     print(f"Model saved to {args.model_path}")
+
+    # Print feature importance
+    feature_names = get_feature_names(X_train[0])
+    model.get_booster().feature_names = feature_names
+    _, ax = plt.subplots(figsize=(23, 10))
+    plot_importance(model, max_num_features=20, ax=ax)
+    plt.savefig("plot.png")
 
     baseball_model = XBGBaseballModel(model)
     evaluate(baseball_model, args.eval_data)
@@ -114,9 +136,9 @@ if __name__ == "__main__":
         nargs="+",
         help="Paths to CSV files containing baseball data for training",
         default=[
-            "./csv_data/2021_data.csv",
             "./csv_data/2022_data.csv",
             "./csv_data/2023_data.csv",
+            "./csv_data/2024_data.csv",
         ],
     )
     parser.add_argument(
@@ -124,7 +146,7 @@ if __name__ == "__main__":
         type=str,
         nargs="+",
         help="Paths to CSV files containing baseball data for evaluation",
-        default=["./csv_data/2024_data.csv"],
+        default=["./csv_data/2021_data.csv"],
     )
     parser.add_argument(
         "--full_data",

@@ -1,6 +1,7 @@
 import torch
 import os
 import csv
+from tqdm import tqdm
 from data.baseball_data_model import csv_to_teamdata, TeamData
 from model import BaseballModel
 
@@ -83,7 +84,7 @@ def evaluate(model: BaseballModel, data_path: str):
     game_data = GameResultData(data_path).get_games()
     model.prepare_eval()
     with torch.no_grad():
-        for game_id, team_results in game_data.items():
+        for game_id, team_results in tqdm(game_data.items()):
             results = []
             for team in team_results.keys():
                 score, features, date = team_results[team]
@@ -91,4 +92,6 @@ def evaluate(model: BaseballModel, data_path: str):
                 results.append(TeamScore(game_id, date, team, score, predicted_score))
 
             correct += check_winner(results)
-    print(f"Accuracy: {correct/len(game_data)}")
+    accuracy = correct / len(game_data)
+    formatted_acc = "{:.2%}".format(accuracy)
+    print(f"Accuracy of data {data_path} is {formatted_acc}")
