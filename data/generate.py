@@ -10,7 +10,7 @@ from .baseball_data_model import (
     BaseballGameData,
     save_feature_names,
 )
-from .statsapi_utils import get_date, team_info
+from .statsapi_utils import get_date, team_info, get_runs
 
 COOLDOWN_TIME = 1
 REQUESTS_ERROR_RETRY = 10
@@ -26,7 +26,7 @@ hydrate = 'stats(group=[hitting],type=[vsPlayer],opposingPlayerId={},season=2019
 """
 
 
-def generate_data(game_id, year, write_names=False) -> BaseballGameData:
+def generate_data(game_id, year, innings=None, write_names=False) -> BaseballGameData:
     # Get game details
     game_response = statsapi.get("game", {"gamePk": game_id})
 
@@ -40,7 +40,6 @@ def generate_data(game_id, year, write_names=False) -> BaseballGameData:
     ][
         0
     ]  # Astros
-    away_runs = game_response["liveData"]["linescore"]["teams"]["away"]["runs"]
 
     home_lineup = game_response["liveData"]["boxscore"]["teams"]["home"]["battingOrder"]
     home_starting_pitcher_id = game_response["liveData"]["boxscore"]["teams"]["home"][
@@ -48,7 +47,9 @@ def generate_data(game_id, year, write_names=False) -> BaseballGameData:
     ][
         0
     ]  # Orioles
-    home_runs = game_response["liveData"]["linescore"]["teams"]["home"]["runs"]
+
+    # Get runs
+    away_runs, home_runs = get_runs(game_response, innings)
 
     # Feature set: [[OPPONENT_STARTING_PITCHER],[ROSTER]]
     away_opponent_pitcher_stats, away_opponent_pitcher_feature_names = (
