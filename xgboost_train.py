@@ -107,13 +107,6 @@ def train(args):
     model.save_model(args.model_path)
     print(f"Model saved to {args.model_path}")
 
-    # Print feature importance
-    feature_names = get_feature_names(X_train[0])
-    model.get_booster().feature_names = feature_names
-    _, ax = plt.subplots(figsize=(23, 10))
-    plot_importance(model, max_num_features=20, ax=ax)
-    plt.savefig("plot.png")
-
     baseball_model = XBGBaseballModel(model)
     evaluate(baseball_model, args.eval_data)
 

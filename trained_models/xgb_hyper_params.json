@@ -1,12 +1,1 @@
-{
-    "colsample_bytree": 0.9,
-    "gamma": 0.5,
-    "grow_policy": "depthwise",
-    "learning_rate": 0.01,
-    "max_depth": 6,
-    "min_child_weight": 1,
-    "n_estimators": 1500,
-    "reg_alpha": 0.01,
-    "reg_lambda": 1,
-    "subsample": 0.6
-}
+{"max_depth": 3}
