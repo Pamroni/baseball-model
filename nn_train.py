@@ -119,7 +119,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--epochs",
         type=int,
-        default=100,
+        default=200,
         help="Number of epochs to train the model",
     )
 
@@ -170,6 +170,7 @@ if __name__ == "__main__":
         nargs="+",
         help="Paths to CSV files containing baseball data for training",
         default=[
+            "./csv_data/2019_data.csv",
             "./csv_data/2021_data.csv",
             "./csv_data/2022_data.csv",
             "./csv_data/2023_data.csv",
