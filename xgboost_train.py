@@ -20,46 +20,38 @@ from data.baseball_data_model import get_feature_names
 from cuml.model_selection import GridSearchCV, train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
-"""
-from sklearn.model_selection import GridSearchCV
-# set up our search grid
-param_grid = {"max_depth":    [4, 5, 6],
-              "n_estimators": [500, 600, 700],
-              "learning_rate": [0.01, 0.015]}
 
-# try out every combination of the above values
-search = GridSearchCV(regressor, param_grid, cv=5).fit(X_train, y_train)
-
-print("The best hyperparameters are ",search.best_params_)
-https://www.kaggle.com/code/carlmcbrideellis/an-introduction-to-xgboost-regression
-
-
-https://xgboost.readthedocs.io/en/latest/gpu/
-
-https://rapids.ai
-
-https://medium.com/@rithpansanga/the-main-parameters-in-xgboost-and-their-effects-on-model-performance-4f9833cac7c
-
-"""
 device = "cuda" if is_available() else "cpu"
 
 
 def get_hyperparameters(model, X_train, y_train):
     param_grid = {
-        "max_depth": [5],
-        "n_estimators": [1500],
-        "learning_rate": [0.01],
-        "subsample": [0.4, 0.5, 0.6],
-        "colsample_bytree": [0.9],
+        "max_depth": [3, 4, 5, 6, 7],
+        "n_estimators": [500, 750, 1000, 1250, 1500],
+        "learning_rate": [0.1, 0.05, 0.01],
+        "subsample": [0.2, 0.4, 0.6, 0.8],
+        "colsample_bytree": [0.4, 0.6, 0.8, 1.0],
         "gamma": [0, 0.1, 0.5, 1],
-        "min_child_weight": [1, 3, 5],
+        "min_child_weight": [
+            0.1,
+            0.5,
+            1,
+            3,
+        ],
         "reg_alpha": [0, 0.01, 0.1],
         "reg_lambda": [1, 10, 100],
         "grow_policy": ["depthwise", "lossguide"],
     }
     print(f"Searching for the best hyperparameters from the grid: {param_grid}")
     start = time.time()
-    search = GridSearchCV(model, param_grid, cv=3, n_jobs=-1, verbose=3)
+    search = GridSearchCV(
+        model,
+        param_grid,
+        cv=3,
+        n_jobs=-1,
+        verbose=3,
+        scoring="neg_mean_absolute_error",  # Set scoring to MAE
+    )
     search.fit(X_train, y_train)  # This will take a while, CUDA not supported for this
     print(f"Search took {time.time() - start} seconds")
     print("The best hyperparameters are ", search.best_params_)
@@ -136,9 +128,10 @@ if __name__ == "__main__":
         nargs="+",
         help="Paths to CSV files containing baseball data for training",
         default=[
+            "./csv_data/2019_data.csv",
+            "./csv_data/2021_data.csv",
             "./csv_data/2022_data.csv",
             "./csv_data/2023_data.csv",
-            "./csv_data/2024_data.csv",
         ],
     )
     parser.add_argument(
@@ -146,7 +139,7 @@ if __name__ == "__main__":
         type=str,
         nargs="+",
         help="Paths to CSV files containing baseball data for evaluation",
-        default=["./csv_data/2021_data.csv"],
+        default=["./csv_data/2024_data.csv"],
     )
     parser.add_argument(
         "--full_data",
@@ -159,7 +152,7 @@ if __name__ == "__main__":
         "--find_hyperparameters",
         action="store_true",
         help="Find the best hyperparameters for the model",
-        default=False,
+        default=True,
     )
 
     # Boring stuff
