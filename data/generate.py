@@ -10,7 +10,7 @@ from .baseball_data_model import (
     BaseballGameData,
     save_feature_names,
 )
-from .statsapi_utils import get_date, team_info
+from .statsapi_utils import get_date, team_info, get_runs
 
 COOLDOWN_TIME = 1
 REQUESTS_ERROR_RETRY = 10
@@ -26,8 +26,10 @@ hydrate = 'stats(group=[hitting],type=[vsPlayer],opposingPlayerId={},season=2019
 """
 
 
-def generate_data(game_id, year, write_names=False) -> BaseballGameData:
+def generate_data(game_id, year, innings=None, write_names=False) -> BaseballGameData:
     # Get game details
+    game_id = 746362
+    year = "2024"
     game_response = statsapi.get("game", {"gamePk": game_id})
 
     query_date, display_date = get_date(game_response)  # string of datetime
@@ -40,7 +42,6 @@ def generate_data(game_id, year, write_names=False) -> BaseballGameData:
     ][
         0
     ]  # Astros
-    away_runs = game_response["liveData"]["linescore"]["teams"]["away"]["runs"]
 
     home_lineup = game_response["liveData"]["boxscore"]["teams"]["home"]["battingOrder"]
     home_starting_pitcher_id = game_response["liveData"]["boxscore"]["teams"]["home"][
@@ -48,7 +49,9 @@ def generate_data(game_id, year, write_names=False) -> BaseballGameData:
     ][
         0
     ]  # Orioles
-    home_runs = game_response["liveData"]["linescore"]["teams"]["home"]["runs"]
+
+    # Get runs
+    away_runs, home_runs = get_runs(game_response, innings)
 
     # Feature set: [[OPPONENT_STARTING_PITCHER],[ROSTER]]
     away_opponent_pitcher_stats, away_opponent_pitcher_feature_names = (
@@ -58,7 +61,10 @@ def generate_data(game_id, year, write_names=False) -> BaseballGameData:
     away_feature_names = []
     for lineup_number, batter in enumerate(away_lineup):
         away_batter_stats, away_batter_feature_names = get_batter_stats(
-            batter, query_date, year
+            player_id=batter,
+            game_date=query_date,
+            year=year,
+            pitcher_id=home_starting_pitcher_id,
         )
         for name in away_batter_feature_names:
             away_feature_names.append(f"{lineup_number+1}_{name}")
@@ -72,7 +78,10 @@ def generate_data(game_id, year, write_names=False) -> BaseballGameData:
     home_feature_names = []
     for lineup_number, batter in enumerate(home_lineup):
         home_batter_stats, home_batter_feature_names = get_batter_stats(
-            batter, query_date, year
+            player_id=batter,
+            game_date=query_date,
+            year=year,
+            pitcher_id=away_starting_pitcher_id,
         )
         for name in home_batter_feature_names:
             home_feature_names.append(f"{lineup_number+1}_{name}")
@@ -103,7 +112,7 @@ def generate_data(game_id, year, write_names=False) -> BaseballGameData:
     )
 
 
-def season_data(year) -> list[BaseballGameData]:
+def season_data(year, innings=None) -> list[BaseballGameData]:
     # Get all games for a season
     game_data: list[BaseballGameData] = []
     game_ids = []
@@ -130,7 +139,7 @@ def season_data(year) -> list[BaseballGameData]:
         retries = 0
         while retries < REQUESTS_ERROR_RETRY:
             try:
-                game_data.append(generate_data(game_id, year))
+                game_data.append(generate_data(game_id, year, innings))
                 break
             except requests.exceptions.RequestException as e:
                 retries += 1
@@ -155,9 +164,13 @@ def write_to_csv(game_data: list[BaseballGameData], filename):
 
 
 def process_year(year):
-    filename = f"csv_data/fixed_{year}_data.csv"
+    innings_runs = 5
+    if innings_runs:
+        filename = f"csv_data/{year}_data_{innings_runs}_innings.csv"
+    else:
+        filename = f"csv_data/{year}_data.csv"
     print(f"Generating data for {year}")
-    game_data = season_data(year)
+    game_data = season_data(year, innings_runs)
     print(f"Generated {len(game_data)} games worth of data, writing to {filename}")
     write_to_csv(game_data, filename)
 
@@ -181,5 +194,10 @@ Retrying 746577 due to unknown error: list index out of range
 """
 if __name__ == "__main__":
     years = ["2019", "2021", "2022", "2023", "2024"]
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.map(process_year, years)
+    threaded = True
+    if threaded:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(process_year, years)
+    else:
+        for year in years:
+            process_year(year)

@@ -12,3 +12,18 @@ def team_info(game_response):
     home_team = game_response["gameData"]["teams"]["home"]["name"]
     home_team_id = game_response["gameData"]["teams"]["home"]["id"]
     return away_team, away_team_id, home_team, home_team_id
+
+
+def get_runs(game_response, innings=None):
+    if innings:
+        away_runs = 0
+        home_runs = 0
+        for inning in game_response["liveData"]["linescore"]["innings"]:
+            if inning["num"] <= innings:
+                away_runs += inning["away"]["runs"]
+                home_runs += inning["home"]["runs"]
+    else:
+        away_runs = game_response["liveData"]["linescore"]["teams"]["away"]["runs"]
+        home_runs = game_response["liveData"]["linescore"]["teams"]["home"]["runs"]
+
+    return away_runs, home_runs
