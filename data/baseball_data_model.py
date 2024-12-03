@@ -1,3 +1,7 @@
+import csv
+import os
+
+
 class BaseballGameData:
     def __init__(
         self,
@@ -55,6 +59,25 @@ class TeamData:
         for i in range(len(vals)):
             vals[i] = str(vals[i])
         return vals
+
+
+# Take a list of feature names and save them
+def save_feature_names(feature_names):
+    feature_len = len(feature_names)
+    # Save as feature_len_names.txt
+    file_name = f"./csv_data/feature_names_{feature_len}.txt"
+    if not os.path.exists(file_name):
+        with open(file_name, "w") as file:
+            file.write(",".join(feature_names))
+
+
+def get_feature_names(feature_list, path="./csv_data/"):
+    feature_len = len(feature_list)
+    file_name = f"{path}feature_names_{feature_len}.txt"
+    with open(file_name, "r") as file:
+        reader = csv.reader(file)
+        for row in reader:
+            return row
 
 
 def csv_to_teamdata(row):

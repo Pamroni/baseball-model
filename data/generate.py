@@ -1,4 +1,3 @@
-import os
 import concurrent.futures
 import time
 import requests
@@ -7,7 +6,10 @@ from tqdm import tqdm
 
 from .batting import get_batter_stats
 from .pitching import get_pitcher_stats
-from .baseball_data_model import BaseballGameData, TeamData, csv_to_teamdata
+from .baseball_data_model import (
+    BaseballGameData,
+    save_feature_names,
+)
 from .statsapi_utils import get_date, team_info
 
 COOLDOWN_TIME = 1
@@ -16,10 +18,15 @@ REQUESTS_ERROR_RETRY = 10
 """
 Other ideas:
 gameData["weather"] - use environmental data
+
+Pitching matchups vs opp st pitcher
+hydrate = 'stats(group=[hitting],type=[vsPlayer],opposingPlayerId={},season=2019,sportId=1)'.format(opponentId)
+
+
 """
 
 
-def generate_data(game_id, year) -> BaseballGameData:
+def generate_data(game_id, year, write_names=False) -> BaseballGameData:
     # Get game details
     game_response = statsapi.get("game", {"gamePk": game_id})
 
@@ -44,19 +51,40 @@ def generate_data(game_id, year) -> BaseballGameData:
     home_runs = game_response["liveData"]["linescore"]["teams"]["home"]["runs"]
 
     # Feature set: [[OPPONENT_STARTING_PITCHER],[ROSTER]]
-    away_opponent_pitcher_stats = get_pitcher_stats(
-        home_starting_pitcher_id, query_date, year
+    away_opponent_pitcher_stats, away_opponent_pitcher_feature_names = (
+        get_pitcher_stats(home_starting_pitcher_id, query_date, year)
     )
     away_batting_stats = []
-    for batter in away_lineup:
-        away_batting_stats.extend(get_batter_stats(batter, query_date, year))
+    away_feature_names = []
+    for lineup_number, batter in enumerate(away_lineup):
+        away_batter_stats, away_batter_feature_names = get_batter_stats(
+            batter, query_date, year
+        )
+        for name in away_batter_feature_names:
+            away_feature_names.append(f"{lineup_number+1}_{name}")
 
-    home_opponent_pitcher_stats = get_pitcher_stats(
-        away_starting_pitcher_id, query_date, year
+        away_batting_stats.extend(away_batter_stats)
+
+    home_opponent_pitcher_stats, home_opponent_pitcher_features_names = (
+        get_pitcher_stats(away_starting_pitcher_id, query_date, year)
     )
     home_batting_stats = []
-    for batter in home_lineup:
-        home_batting_stats.extend(get_batter_stats(batter, query_date, year))
+    home_feature_names = []
+    for lineup_number, batter in enumerate(home_lineup):
+        home_batter_stats, home_batter_feature_names = get_batter_stats(
+            batter, query_date, year
+        )
+        for name in home_batter_feature_names:
+            home_feature_names.append(f"{lineup_number+1}_{name}")
+        home_batting_stats.extend(home_batter_stats)
+
+    # Assert that the features are the same
+    assert home_feature_names == away_feature_names
+    assert away_opponent_pitcher_feature_names == home_opponent_pitcher_features_names
+
+    feature_names = [] + home_feature_names + home_opponent_pitcher_features_names
+    if write_names:
+        save_feature_names(feature_names)
 
     home_features = [] + home_batting_stats + home_opponent_pitcher_stats
     away_features = [] + away_batting_stats + away_opponent_pitcher_stats
@@ -127,7 +155,7 @@ def write_to_csv(game_data: list[BaseballGameData], filename):
 
 
 def process_year(year):
-    filename = f"csv_data/{year}_data.csv"
+    filename = f"csv_data/fixed_{year}_data.csv"
     print(f"Generating data for {year}")
     game_data = season_data(year)
     print(f"Generated {len(game_data)} games worth of data, writing to {filename}")
@@ -152,7 +180,6 @@ Retrying 746577 due to unknown error: list index out of range
 
 """
 if __name__ == "__main__":
-    years = ["2022", "2023", "2024"]
-    for year in years:
-        process_year(year)
-        time.sleep(COOLDOWN_TIME * 10)
+    years = ["2019", "2021", "2022", "2023", "2024"]
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.map(process_year, years)

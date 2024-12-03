@@ -1,0 +1,74 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Neural Network training",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "nn_train",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "args": [
+                "--training_data",
+                "./csv_data/fixed_2021_data.csv",
+                "./csv_data/fixed_2022_data.csv",
+                "./csv_data/fixed_2023_data.csv",
+                "--eval_data",
+                "./csv_data/fixed_2024_data.csv",
+            ]
+        },
+        {
+            "name": "Neural Network Full data",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "nn_train",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "args": [
+                "--full_data",
+                "./csv_data/fixed_2021_data.csv",
+                "./csv_data/fixed_2022_data.csv",
+                "./csv_data/fixed_2023_data.csv",
+                "./csv_data/fixed_2024_data.csv",
+            ]
+        },
+        {
+            "name": "XGBoost training",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "xgboost_train",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "args": [
+                "--training_data",
+                "./csv_data/fixed_2022_data.csv",
+                "./csv_data/fixed_2023_data.csv",
+                "./csv_data/fixed_2021_data.csv",
+                "./csv_data/fixed_2019_data.csv",
+                "--eval_data",
+                "./csv_data/fixed_2024_data.csv",
+            ]
+        },
+        {
+            "name": "XGBoost Full Data",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "xgboost_train",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "args": [
+                "--full_data",
+                "./csv_data/fixed_2021_data.csv",
+                "./csv_data/fixed_2022_data.csv",
+                "./csv_data/fixed_2023_data.csv",
+                "./csv_data/fixed_2024_data.csv",
+            ]
+        },
+        {
+            "name": "Data generate",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "data.generate",
+            "python": "${workspaceFolder}/.venv/bin/python",
+        },
+    ]
+}

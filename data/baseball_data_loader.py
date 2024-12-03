@@ -1,7 +1,7 @@
 import os
 import csv
 from typing import List, Tuple
-from sklearn.model_selection import train_test_split
+import numpy as np
 from .baseball_data_model import TeamData, csv_to_teamdata
 
 
@@ -19,6 +19,17 @@ class BaseballDataLoader:
                     team_data_list.append(team_data)
         return team_data_list
 
+    def find_game(self, team_name=None, game_id=None, date=None):
+        team_data_list = self.load_data()
+        for team_data in team_data_list:
+            if team_name is not None and team_data.team_name != team_name:
+                continue
+            if game_id is not None and team_data.game_id != game_id:
+                continue
+            if date is not None and team_data.date != date:
+                continue
+            return team_data
+
     def get_training_data(self) -> Tuple[List[List[float]], List[float]]:
         team_data_list = self.load_data()
         X = []
@@ -30,4 +41,5 @@ class BaseballDataLoader:
             features = [float(f) for f in features]
             X.append(features)
             y.append(label)
-        return X, y
+
+        return np.array(X, dtype=float), np.array(y, dtype=float)
