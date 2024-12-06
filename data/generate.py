@@ -28,8 +28,6 @@ hydrate = 'stats(group=[hitting],type=[vsPlayer],opposingPlayerId={},season=2019
 
 def generate_data(game_id, year, innings=None, write_names=False) -> BaseballGameData:
     # Get game details
-    game_id = 746362
-    year = "2024"
     game_response = statsapi.get("game", {"gamePk": game_id})
 
     query_date, display_date = get_date(game_response)  # string of datetime
