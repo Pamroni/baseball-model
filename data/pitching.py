@@ -70,19 +70,21 @@ ZERO_VALUES = [".---", "-.--", "-"]
 
 def get_pitcher_stats(player_id, game_date, year, last_x=10):
     season_start_date = f"01/01/{year}"
-    t_minus_1_game_date = datetime.strptime(game_date, "%m/%d/%Y") - timedelta(days = 1)
-    last_x_start_date = (t_minus_1_game_date - timedelta(days=last_x)).strftime("%m/%d/%Y")
+    t_minus_1_game_date = datetime.strptime(game_date, "%m/%d/%Y") - timedelta(days=1)
+    last_x_start_date = (t_minus_1_game_date - timedelta(days=last_x)).strftime(
+        "%m/%d/%Y"
+    )
     t_minus_1_game_date = t_minus_1_game_date.strftime("%m/%d/%Y")
 
     player_season_stats = statsapi.player_stat_data(
         player_id,
         group="[pitching]",
-        type=f"[byDateRange],startDate={season_start_date},endDate={t_minus_1_game_date},currentTeam",
+        type=f"[byDateRange],startDate={season_start_date},endDate={t_minus_1_game_date}",
     )["stats"]
     player_last_x_dates_stats = statsapi.player_stat_data(
         player_id,
         group="[pitching]",
-        type=f"[byDateRange],startDate={last_x_start_date},endDate={t_minus_1_game_date},currentTeam",
+        type=f"[byDateRange],startDate={last_x_start_date},endDate={t_minus_1_game_date}",
     )["stats"]
     season = {}
     last_x_pitching = {}
@@ -114,6 +116,6 @@ def get_pitcher_stats(player_id, game_date, year, last_x=10):
     for prefix in prefix_list:
         for key in PITCHER_STATS:
             name = f"pitcher_{prefix}_{key}"
-            feature_names.append(name)    
+            feature_names.append(name)
 
     return features, feature_names

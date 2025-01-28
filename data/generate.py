@@ -191,7 +191,7 @@ Retrying 746577 due to unknown error: list index out of range
 
 """
 if __name__ == "__main__":
-    years = ["2019", "2021", "2022", "2023", "2024"]
+    years = ["2017", "2018", "2019", "2021", "2022", "2023", "2024"]
     threaded = True
     if threaded:
         with concurrent.futures.ThreadPoolExecutor() as executor:

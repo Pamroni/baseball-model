@@ -22,24 +22,41 @@ from sklearn.metrics import mean_squared_error, r2_score
 
 
 device = "cuda" if is_available() else "cpu"
+device = "cpu"  # GPU not really needed
 
 
 def get_hyperparameters(model, X_train, y_train):
     param_grid = {
-        "max_depth": [3, 4, 5, 6, 7],
-        "n_estimators": [500, 750, 1000, 1250, 1500],
+        "max_depth": [3, 5, 7],
+        "n_estimators": [500, 1000, 1500],
         "learning_rate": [0.1, 0.05, 0.01],
-        "subsample": [0.2, 0.4, 0.6, 0.8],
-        "colsample_bytree": [0.4, 0.6, 0.8, 1.0],
-        "gamma": [0, 0.1, 0.5, 1],
+        "subsample": [0.0, 0.5, 1.0],
+        "colsample_bytree": [0.0, 0.5, 1.0],
+        "gamma": [0, 0.5, 1],
         "min_child_weight": [
             0.1,
             0.5,
             1,
-            3,
         ],
         "reg_alpha": [0, 0.01, 0.1],
-        "reg_lambda": [1, 10, 100],
+        "reg_lambda": [1, 10],
+        "grow_policy": ["depthwise", "lossguide"],
+    }
+
+    # Minimized param grid
+    param_grid = {
+        "max_depth": [3, 5, 7],
+        "n_estimators": [500, 1000, 1500],
+        "learning_rate": [0.1, 0.01],
+        "subsample": [0.0, 0.5, 1.0],
+        "colsample_bytree": [0.5, 1.0],
+        "gamma": [0, 0.5, 1],
+        "min_child_weight": [
+            0.5,
+            1,
+        ],
+        "reg_alpha": [0, 0.1],
+        "reg_lambda": [1, 10],
         "grow_policy": ["depthwise", "lossguide"],
     }
     print(f"Searching for the best hyperparameters from the grid: {param_grid}")
@@ -121,10 +138,12 @@ if __name__ == "__main__":
         nargs="+",
         help="Paths to CSV files containing baseball data for training",
         default=[
-            "./csv_data/2019_data.csv",
-            "./csv_data/2021_data.csv",
-            "./csv_data/2022_data.csv",
-            "./csv_data/2023_data.csv",
+            "./csv_data/2017_data_5_innings.csv",
+            "./csv_data/2018_data_5_innings.csv",
+            "./csv_data/2019_data_5_innings.csv",
+            "./csv_data/2021_data_5_innings.csv",
+            "./csv_data/2022_data_5_innings.csv",
+            "./csv_data/2023_data_5_innings.csv",
         ],
     )
     parser.add_argument(
@@ -132,7 +151,7 @@ if __name__ == "__main__":
         type=str,
         nargs="+",
         help="Paths to CSV files containing baseball data for evaluation",
-        default=["./csv_data/2024_data.csv"],
+        default=["./csv_data/2024_data_5_innings.csv"],
     )
     parser.add_argument(
         "--full_data",
@@ -145,7 +164,7 @@ if __name__ == "__main__":
         "--find_hyperparameters",
         action="store_true",
         help="Find the best hyperparameters for the model",
-        default=True,
+        default=False,
     )
 
     # Boring stuff
@@ -153,7 +172,7 @@ if __name__ == "__main__":
         "--model_path",
         type=str,
         help="Path to save the trained model",
-        default="./trained_models/baseball_xgb.json",
+        default="./trained_models/baseball_xgb_5_innings.json",
     )
     args = parser.parse_args()
     train(args)

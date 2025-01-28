@@ -95,12 +95,12 @@ def get_batter_stats(player_id, game_date, year, pitcher_id, last_x=5):
     player_season_stats = statsapi.player_stat_data(
         player_id,
         group="[hitting]",
-        type=f"[byDateRange],startDate={season_start_date},endDate={t_minus_1_game_date},currentTeam",
+        type=f"[byDateRange],startDate={season_start_date},endDate={t_minus_1_game_date}",
     )["stats"]
     player_last_x_dates_stats = statsapi.player_stat_data(
         player_id,
         group="[hitting]",
-        type=f"[byDateRange],startDate={last_x_start_date},endDate={t_minus_1_game_date},currentTeam",
+        type=f"[byDateRange],startDate={last_x_start_date},endDate={t_minus_1_game_date}",
     )["stats"]
     season = {}
     last_x_batting = {}
