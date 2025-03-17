@@ -68,6 +68,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "data.generate",
+            "justMyCode": false,
             "python": "${workspaceFolder}/.venv/bin/python",
         },
     ]

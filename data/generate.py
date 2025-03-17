@@ -28,8 +28,6 @@ hydrate = 'stats(group=[hitting],type=[vsPlayer],opposingPlayerId={},season=2019
 
 def generate_data(game_id, year, innings=None, write_names=False) -> BaseballGameData:
     # Get game details
-    game_id = 746362
-    year = "2024"
     game_response = statsapi.get("game", {"gamePk": game_id})
 
     query_date, display_date = get_date(game_response)  # string of datetime
@@ -193,7 +191,7 @@ Retrying 746577 due to unknown error: list index out of range
 
 """
 if __name__ == "__main__":
-    years = ["2019", "2021", "2022", "2023", "2024"]
+    years = ["2017", "2018", "2019", "2021", "2022", "2023", "2024"]
     threaded = True
     if threaded:
         with concurrent.futures.ThreadPoolExecutor() as executor:
