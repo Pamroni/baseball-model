@@ -26,27 +26,34 @@ device = "cpu"  # GPU not really needed
 
 
 def get_hyperparameters(model, X_train, y_train):
-    param_grid = {
+    # Minimized param grid
+    tree_grid = {
+        "booster": ["gbtree"],
         "max_depth": [3, 5, 7],
-        "n_estimators": [500, 1000, 1500],
-        "learning_rate": [0.1, 0.05, 0.01],
-        "subsample": [0.0, 0.5, 1.0],
-        "colsample_bytree": [0.0, 0.5, 1.0],
-        "gamma": [0, 0.5, 1],
-        "min_child_weight": [
-            0.1,
-            0.5,
-            1,
-        ],
-        "reg_alpha": [0, 0.01, 0.1],
+        "n_estimators": [500, 1000],
+        "learning_rate": [0.1, 0.01],
+        "subsample": [0.5, 1.0],
+        "colsample_bytree": [0.5, 1.0],
+        "gamma": [0, 0.5],
+        "min_child_weight": [0.5, 1],
+        "reg_alpha": [0, 0.5, 1],
         "reg_lambda": [1, 10],
         "grow_policy": ["depthwise", "lossguide"],
     }
 
-    # Minimized param grid
-    param_grid = {
+    linear_grid = {
+        "booster": ["gblinear"],
+        "n_estimators": [200, 300, 400, 500, 600, 700, 800],
+        "learning_rate": [0.1, 0.01],
+        "reg_alpha": [0, 0.5],
+        "reg_lambda": [0, 0.5, 1, 2, 5, 10, 15],
+        # No tree-specific params here (max_depth, gamma, etc. are irrelevant for gblinear)
+    }
+
+    total_grid = {
+        "booster": ["gbtree", "gblinear"],
         "max_depth": [3, 5, 7],
-        "n_estimators": [500, 1000, 1500],
+        "n_estimators": [500, 1000],
         "learning_rate": [0.1, 0.01],
         "subsample": [0.0, 0.5, 1.0],
         "colsample_bytree": [0.5, 1.0],
@@ -55,10 +62,12 @@ def get_hyperparameters(model, X_train, y_train):
             0.5,
             1,
         ],
-        "reg_alpha": [0, 0.1],
-        "reg_lambda": [1, 10],
+        "reg_alpha": [0, 0.1, 0.5, 1, 5, 10],
+        "reg_lambda": [0, 1, 10],
         "grow_policy": ["depthwise", "lossguide"],
     }
+
+    param_grid = linear_grid
     print(f"Searching for the best hyperparameters from the grid: {param_grid}")
     start = time.time()
     search = GridSearchCV(
@@ -67,12 +76,14 @@ def get_hyperparameters(model, X_train, y_train):
         cv=3,
         n_jobs=-1,
         verbose=3,
-        scoring="neg_mean_absolute_error",  # Set scoring to MAE
+        scoring="neg_root_mean_squared_error",  # Try this or neg_root_mean_squared_error
     )
     search.fit(X_train, y_train)  # This will take a while, CUDA not supported for this
     print(f"Search took {time.time() - start} seconds")
     print("The best hyperparameters are ", search.best_params_)
-    save_hyperparameters(search.best_params_)
+    save_hyperparameters(
+        search.best_params_, path="./trained_models/linear_lasso_5_params.json"
+    )
     return search.best_params_
 
 
@@ -91,7 +102,7 @@ def train(args):
 
     print(f"Training samples: {len(X_train)}")
 
-    base_params = {"tree_method": "hist", "device": device, "random_state": 42}
+    base_params = {"device": device, "random_state": 42}
 
     model = xgb.XGBRegressor(**base_params)
     if args.find_hyperparameters:
@@ -138,12 +149,12 @@ if __name__ == "__main__":
         nargs="+",
         help="Paths to CSV files containing baseball data for training",
         default=[
-            "./csv_data/2017_data_5_innings.csv",
-            "./csv_data/2018_data_5_innings.csv",
-            "./csv_data/2019_data_5_innings.csv",
-            "./csv_data/2021_data_5_innings.csv",
-            "./csv_data/2022_data_5_innings.csv",
-            "./csv_data/2023_data_5_innings.csv",
+            # "./csv_data/2017_data_5_innings.csv",
+            # "./csv_data/2018_data_5_innings.csv",
+            "./csv_data/2019_data.csv",
+            "./csv_data/2021_data.csv",
+            "./csv_data/2022_data.csv",
+            "./csv_data/2023_data.csv",
         ],
     )
     parser.add_argument(
@@ -151,7 +162,7 @@ if __name__ == "__main__":
         type=str,
         nargs="+",
         help="Paths to CSV files containing baseball data for evaluation",
-        default=["./csv_data/2024_data_5_innings.csv"],
+        default=["./csv_data/2024_data.csv"],
     )
     parser.add_argument(
         "--full_data",
@@ -172,7 +183,7 @@ if __name__ == "__main__":
         "--model_path",
         type=str,
         help="Path to save the trained model",
-        default="./trained_models/baseball_xgb_5_innings.json",
+        default="./trained_models/lasso_full_game.json",
     )
     args = parser.parse_args()
     train(args)
