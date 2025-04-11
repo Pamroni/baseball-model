@@ -183,7 +183,7 @@ if __name__ == "__main__":
         "--model_path",
         type=str,
         help="Path to save the trained model",
-        default="./trained_models/lasso_full_game.json",
+        default="./trained_models/mlb_modeling_app.json",
     )
     args = parser.parse_args()
     train(args)
