@@ -39,6 +39,20 @@ def get_hyperparameters(model, X_train, y_train):
         "grow_policy": ["depthwise", "lossguide"],
     }
 
+    mini_grid = {
+        "booster": ["gbtree"],
+        "max_depth": [3, 5, 9],
+        "n_estimators": [500, 1000, 1500, 2000],
+        "learning_rate": [0.01],
+        "subsample": [0.5, 1.0],
+        "colsample_bytree": [0.5],
+        "gamma": [1.0],
+        "min_child_weight": [0.5],
+        "reg_alpha": [0, 0.1],
+        "reg_lambda": [10],
+        "grow_policy": ["depthwise"],
+    }
+
     linear_grid = {
         "booster": ["gblinear"],
         "n_estimators": [200, 300, 400, 500, 600, 700, 800],
@@ -65,26 +79,26 @@ def get_hyperparameters(model, X_train, y_train):
         "grow_policy": ["depthwise", "lossguide"],
     }
 
-    param_grid = tree_grid
+    param_grid = mini_grid
     print(f"Searching for the best hyperparameters from the grid: {param_grid}")
     start = time.time()
-    # search = GridSearchCV(
-    #     model,
-    #     param_grid,
-    #     cv=3,
-    #     n_jobs=-1,
-    #     verbose=3,
-    #     scoring="neg_root_mean_squared_error",  # Try this or neg_root_mean_squared_error
-    # )
-    search = RandomizedSearchCV(
+    search = GridSearchCV(
         model,
-        param_distributions=param_grid,
-        n_iter=5000,
+        param_grid,
         cv=3,
         n_jobs=-1,
         verbose=3,
-        scoring="neg_root_mean_squared_error",
+        scoring="neg_root_mean_squared_error",  # Try this or neg_root_mean_squared_error
     )
+    # search = RandomizedSearchCV(
+    #     model,
+    #     param_distributions=param_grid,
+    #     n_iter=5000,
+    #     cv=3,
+    #     n_jobs=-1,
+    #     verbose=3,
+    #     scoring="neg_root_mean_squared_error",
+    # )
     search.fit(X_train, y_train)  # This will take a while, CUDA not supported for this
     print(f"Search took {time.time() - start} seconds")
     print("The best hyperparameters are ", search.best_params_)
@@ -115,8 +129,12 @@ def train(args):
     if args.find_hyperparameters:
         hyperparams = get_hyperparameters(model, X_train, y_train)
     else:
-        print(f"Loading hyperparameters from {PARAM_PATH}")
-        hyperparams = load_hyperparameters()
+        print(
+            f"Loading hyperparameters from {"./trained_models/baseball_model_932_random.json"}"
+        )
+        hyperparams = load_hyperparameters(
+            "./trained_models/mlb_app_small_model_params.json"
+        )
 
     model = xgb.XGBRegressor(**hyperparams, **base_params)
 
@@ -190,7 +208,7 @@ if __name__ == "__main__":
         "--model_path",
         type=str,
         help="Path to save the trained model",
-        default="./trained_models/mlb_modeling_app.json",
+        default="./trained_models/mlb_modeling_app_xgb_mini.json",
     )
     args = parser.parse_args()
     train(args)

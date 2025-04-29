@@ -57,10 +57,11 @@
             "python": "${workspaceFolder}/.venv/bin/python",
             "args": [
                 "--full_data",
-                "./csv_data/fixed_2021_data.csv",
-                "./csv_data/fixed_2022_data.csv",
-                "./csv_data/fixed_2023_data.csv",
-                "./csv_data/fixed_2024_data.csv",
+                "./csv_data/2019_data.csv",
+                "./csv_data/2021_data.csv",
+                "./csv_data/2022_data.csv",
+                "./csv_data/2023_data.csv",
+                "./csv_data/2024_data.csv",
             ]
         },
         {

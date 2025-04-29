@@ -1,1 +1,1 @@
-./.venv/bin/python xgboost_train.py --full_data ./csv_data/2017_data_932.csv ./csv_data/2018_data_932.csv ./csv_data/2019_data_932.csv ./csv_data/2021_data_932.csv ./csv_data/2022_data_932.csv ./csv_data/2023_data_932.csv ./csv_data/2024_data_932.csv --find_hyperparameters
+./.venv/bin/python xgboost_train.py --full_data ./csv_data/2017_data_932.csv ./csv_data/2018_data_932.csv ./csv_data/2019_data_932.csv ./csv_data/2021_data_932.csv ./csv_data/2022_data_932.csv ./csv_data/2023_data_932.csv ./csv_data/2024_data_932.csv
