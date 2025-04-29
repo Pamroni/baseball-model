@@ -3,8 +3,6 @@ import argparse
 
 import xgboost as xgb
 import time
-import matplotlib.pyplot as plt
-from xgboost import plot_importance
 
 import numpy as np
 from torch.cuda import is_available
@@ -17,7 +15,7 @@ from xgboost_model import (
 from evaluate import evaluate
 from data.baseball_data_loader import BaseballDataLoader
 from data.baseball_data_model import get_feature_names
-from cuml.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import GridSearchCV, train_test_split, RandomizedSearchCV
 from sklearn.metrics import mean_squared_error, r2_score
 
 
@@ -29,16 +27,30 @@ def get_hyperparameters(model, X_train, y_train):
     # Minimized param grid
     tree_grid = {
         "booster": ["gbtree"],
-        "max_depth": [3, 5, 7],
-        "n_estimators": [500, 1000],
+        "max_depth": [3, 5, 7, 9],
+        "n_estimators": [500, 750, 1000, 1250, 1500, 2000],
         "learning_rate": [0.1, 0.01],
         "subsample": [0.5, 1.0],
         "colsample_bytree": [0.5, 1.0],
         "gamma": [0, 0.5],
         "min_child_weight": [0.5, 1],
         "reg_alpha": [0, 0.5, 1],
-        "reg_lambda": [1, 10],
+        "reg_lambda": [1, 10, 0.1],
         "grow_policy": ["depthwise", "lossguide"],
+    }
+
+    mini_grid = {
+        "booster": ["gbtree"],
+        "max_depth": [3, 5, 9],
+        "n_estimators": [500, 1000, 1500, 2000],
+        "learning_rate": [0.01],
+        "subsample": [0.5, 1.0],
+        "colsample_bytree": [0.5],
+        "gamma": [1.0],
+        "min_child_weight": [0.5],
+        "reg_alpha": [0, 0.1],
+        "reg_lambda": [10],
+        "grow_policy": ["depthwise"],
     }
 
     linear_grid = {
@@ -67,7 +79,7 @@ def get_hyperparameters(model, X_train, y_train):
         "grow_policy": ["depthwise", "lossguide"],
     }
 
-    param_grid = linear_grid
+    param_grid = mini_grid
     print(f"Searching for the best hyperparameters from the grid: {param_grid}")
     start = time.time()
     search = GridSearchCV(
@@ -78,11 +90,20 @@ def get_hyperparameters(model, X_train, y_train):
         verbose=3,
         scoring="neg_root_mean_squared_error",  # Try this or neg_root_mean_squared_error
     )
+    # search = RandomizedSearchCV(
+    #     model,
+    #     param_distributions=param_grid,
+    #     n_iter=5000,
+    #     cv=3,
+    #     n_jobs=-1,
+    #     verbose=3,
+    #     scoring="neg_root_mean_squared_error",
+    # )
     search.fit(X_train, y_train)  # This will take a while, CUDA not supported for this
     print(f"Search took {time.time() - start} seconds")
     print("The best hyperparameters are ", search.best_params_)
     save_hyperparameters(
-        search.best_params_, path="./trained_models/linear_lasso_5_params.json"
+        search.best_params_, path="./trained_models/baseball_model_932_random.json"
     )
     return search.best_params_
 
@@ -108,8 +129,12 @@ def train(args):
     if args.find_hyperparameters:
         hyperparams = get_hyperparameters(model, X_train, y_train)
     else:
-        print(f"Loading hyperparameters from {PARAM_PATH}")
-        hyperparams = load_hyperparameters()
+        print(
+            f"Loading hyperparameters from {"./trained_models/baseball_model_932_random.json"}"
+        )
+        hyperparams = load_hyperparameters(
+            "./trained_models/mlb_app_small_model_params.json"
+        )
 
     model = xgb.XGBRegressor(**hyperparams, **base_params)
 
@@ -183,7 +208,7 @@ if __name__ == "__main__":
         "--model_path",
         type=str,
         help="Path to save the trained model",
-        default="./trained_models/lasso_full_game.json",
+        default="./trained_models/mlb_modeling_app_xgb_mini.json",
     )
     args = parser.parse_args()
     train(args)

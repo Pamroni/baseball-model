@@ -1,1 +1,0 @@
-{"booster": "gblinear", "learning_rate": 0.1, "n_estimators": 700, "reg_alpha": 0, "reg_lambda": 15}

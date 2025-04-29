@@ -162,11 +162,11 @@ def write_to_csv(game_data: list[BaseballGameData], filename):
 
 
 def process_year(year):
-    innings_runs = 5
+    innings_runs = None
     if innings_runs:
         filename = f"csv_data/{year}_data_{innings_runs}_innings.csv"
     else:
-        filename = f"csv_data/{year}_data.csv"
+        filename = f"csv_data/{year}_data_932.csv"
     print(f"Generating data for {year}")
     game_data = season_data(year, innings_runs)
     print(f"Generated {len(game_data)} games worth of data, writing to {filename}")
