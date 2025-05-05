@@ -1,7 +1,7 @@
 import statsapi
 
 
-def get_season_games(year):
+def get_season_games(year, skip_games=None):
     game_ids = []
     months = [
         ("04", "30"),
@@ -12,11 +12,20 @@ def get_season_games(year):
         ("09", "30"),
     ]
     for month, end_day in months:
+        start_date = "01"
+        if month == "04" and skip_games is not None:
+            start_date = str(skip_games)
+            if len(start_date) == 1:
+                start_date = "0" + start_date
+
+
         games = statsapi.schedule(
-            start_date=f"{month}/01/{year}", end_date=f"{month}/{end_day}/{year}"
+            start_date=f"{month}/{start_date}/{year}", end_date=f"{month}/{end_day}/{year}"
         )
         for game in games:
-            game_ids.append(game["game_id"])
+            game_id = game["game_id"]
+            if game["game_type"] == "R":
+                game_ids.append(game_id)
 
     return game_ids
 
@@ -49,9 +58,13 @@ def get_home_lineup(game_response):
         home_starting_pitcher_id = None
     return home_lineup, home_starting_pitcher_id
 
+def get_response_date(game_response):
+    date = game_response["gameData"]["datetime"]["officialDate"]
+    return date
+
 
 def get_date(game_response):
-    date = game_response["gameData"]["datetime"]["officialDate"]
+    date = get_response_date(game_response)
     # MM/DD/YYYY
     query_date = f"{date[5:7]}/{date[8:10]}/{date[0:4]}"
     time = f'{game_response["gameData"]["datetime"]["time"]}{game_response["gameData"]["datetime"]["ampm"]}'
