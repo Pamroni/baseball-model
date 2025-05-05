@@ -29,7 +29,8 @@ def write_to_csv(game_id, label, features, csv_file):
     with open(csv_file, 'a') as f:
         f.write(','.join(map(str, csv_data)) + '\n')
 
-def process_year(year, dataset: Dataset):
+def process_year(year):
+    dataset = FangraphsDataset()
     print(f"Generating data for {year}")
     # Get all games for a season
     start = time.time()
@@ -62,12 +63,11 @@ def process_year(year, dataset: Dataset):
     
 
 if __name__ == "__main__":
-    years = ["2017", "2018", "2019", "2021", "2022", "2023", "2024"]
-    threaded = False
-    data = FangraphsDataset()
+    years = ["2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"]
+    threaded = True
     if threaded:
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(process_year, years, data)
+            executor.map(process_year, years)
     else:
         for year in years:
-            process_year(year, FangraphsDataset())
+            process_year(year)
