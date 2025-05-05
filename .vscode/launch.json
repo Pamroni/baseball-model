@@ -79,5 +79,21 @@
             "justMyCode": false,
             "python": "${workspaceFolder}/.venv/bin/python",
         },
+        {
+            "name": "Debug Fangraphs dataset",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "dataset.fangraphs.fangraphs_dataset",
+            "justMyCode": false,
+            "python": "${workspaceFolder}/.venv/bin/python",
+        },
+        {
+            "name": "Debug Model train",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "model.train",
+            "justMyCode": false,
+            "python": "${workspaceFolder}/.venv/bin/python",
+        },
     ]
 }

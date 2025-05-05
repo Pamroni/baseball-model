@@ -1,3 +1,5 @@
+import pandas as pd
+
 from ..skeleton_dataset import Dataset
 from ..mlb.utils import (
     get_game_response,
@@ -20,6 +22,16 @@ from .pitching import (
     get_pitcher_team_features,
 )
 
+SUPPORTED_YEARS = [
+    "2017",
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
+    "2023",
+    "2024",
+]
 
 class FangraphsDataset(Dataset):
     def __init__(self):
@@ -30,6 +42,17 @@ class FangraphsDataset(Dataset):
 
     def get_csv_file_prefix(self) -> str:
         return self.csv_file_prefix
+
+    def load_training_data(self, year: str):
+        file_path = f"{self.csv_file_prefix}_{year}.csv"
+        try:
+            df = pd.read_csv(file_path, header=None)
+            features = df.iloc[:, 2:].values.tolist()
+            labels = df.iloc[:, 1].values.tolist()
+            return features, labels
+        except FileNotFoundError as e:
+            print(f"File {file_path} not found.")
+            raise e
 
     def generate_csv_data(self, game_id):
         # Placeholder for actual implementation
@@ -150,7 +173,4 @@ class FangraphsDataset(Dataset):
 
 if __name__ == "__main__":
     dataset = FangraphsDataset()
-    game_id = 778055
-    label, features = dataset.generate_csv_data(game_id)
-    print(f"Label: {label}")
-    print(f"Features: {features}")
+    dataset.load_training_data("2017")

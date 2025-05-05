@@ -16,7 +16,7 @@ def get_filename(year, prefix):
 
 def get_csv_dataframe(file_name):
     try:
-        df = pd.read_csv(file_name)
+        df = pd.read_csv(file_name, header=None)
         return df
     except Exception:
         # Create empty file

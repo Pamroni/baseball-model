@@ -27,3 +27,14 @@ class Dataset(ABC):
             Given the game_id, generate the label and the feature data to use in training
         """
         raise NotImplementedError("Subclasses should implement this method.")
+    
+    @abstractmethod
+    def load_training_data(self, year: str) -> Tuple[List[List[float]], List[float]]:
+        """
+        Given the year, load the training data from the CSV file.
+        If year is none, load all the data in the path
+        This method should be overridden by subclasses to provide specific loading logic.
+
+        Returns a list of the features and a list of the labels
+        """
+        raise NotImplementedError("Subclasses should implement this method.")
