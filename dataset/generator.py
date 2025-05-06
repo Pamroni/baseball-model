@@ -5,9 +5,10 @@ from tqdm import tqdm
 from .mlb.utils import get_season_games
 from .skeleton_dataset import Dataset
 from .fangraphs.fangraphs_dataset import FangraphsDataset
-
+from .fangraphs.fangraphs_dataset_reduced import FangraphsDatasetReduced
+from .fangraphs.fangraphs_dataset_lineup_average import FangraphsLineupAverageDataset
 COOLDOWN_TIME = 1
-REQUESTS_ERROR_RETRY = 10
+REQUESTS_ERROR_RETRY = 5
 
 GAME_ID_CSV_INDEX = 0
 
@@ -30,7 +31,7 @@ def write_to_csv(game_id, label, features, csv_file):
         f.write(','.join(map(str, csv_data)) + '\n')
 
 def process_year(year):
-    dataset = FangraphsDataset()
+    dataset = FangraphsLineupAverageDataset()
     print(f"Generating data for {year}")
     # Get all games for a season
     start = time.time()
@@ -50,7 +51,11 @@ def process_year(year):
             
                 # Get the game data
                 label, data = dataset.generate_csv_data(game_id)
-                write_to_csv(game_id, label, data, csv_file)
+                if data == []:
+                    print(f"Game {game_id} has no data")
+                    break
+                else:
+                    write_to_csv(game_id, label, data, csv_file)
                 break
             except Exception as e:
                 retries += 1

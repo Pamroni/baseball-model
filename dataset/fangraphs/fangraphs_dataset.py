@@ -40,6 +40,10 @@ class FangraphsDataset(Dataset):
         self.batter_days = 5
         self.starting_pitcher_days = 14
 
+    def get_feature_size(self):
+        features = self.generate_features(661527)
+        return len(features)
+
     def get_csv_file_prefix(self) -> str:
         return self.csv_file_prefix
 
@@ -75,6 +79,8 @@ class FangraphsDataset(Dataset):
         away_team, _, home_team, _ = team_info(game_response)
         home_lineup, home_starting_pitcher = get_home_lineup(game_response)
         away_lineup, away_starting_pitcher = get_away_lineup(game_response)
+        if home_lineup == [] or away_lineup == []:
+            return []
         home_team_id = get_team_id(home_team)
         away_team_id = get_team_id(away_team)
 
@@ -173,4 +179,4 @@ class FangraphsDataset(Dataset):
 
 if __name__ == "__main__":
     dataset = FangraphsDataset()
-    dataset.load_training_data("2017")
+    dataset.generate_csv_data(661527)

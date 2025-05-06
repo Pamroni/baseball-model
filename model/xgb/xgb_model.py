@@ -1,10 +1,11 @@
 from ..skeleton_model import Model
 from dataset.fangraphs.fangraphs_dataset import FangraphsDataset, SUPPORTED_YEARS
+from dataset.fangraphs.fangraphs_dataset_reduced import FangraphsDatasetReduced
 import xgboost as xgb
 
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 
-xgb_base_params = {"random_state": 42}
+xgb_base_params = {"random_state": 42, "tree_method": "hist"}
 
 class XGBFangraphsModel(Model):
     def __init__(self, model: xgb.XGBRegressor = None):
@@ -12,7 +13,7 @@ class XGBFangraphsModel(Model):
             self.model = xgb.XGBRegressor(**xgb_base_params)
         else:
             self.model = model
-        self.dataset = FangraphsDataset()
+        self.dataset = FangraphsDatasetReduced()
         self.path = "./model/xgb/xgb_model.json"
 
     @staticmethod
@@ -38,19 +39,28 @@ class XGBFangraphsModel(Model):
         return prediction > 0
     
     def get_hyperparameters(self, X_train, y_train):
+        return {
+            "n_estimators": 1000,
+            "max_depth": 5,
+            "learning_rate": 0.1,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "tree_method": "hist"
+        }
         param_grid = {
-            "n_estimators": [100, 200],
-            "max_depth": [3, 5, 7],
+            "n_estimators": [100],
+            "max_depth": [5, 7],
             "learning_rate": [0.01, 0.1, 0.2],
             "subsample": [0.8, 1.0],
             "colsample_bytree": [0.8, 1.0],
+            "tree_method": ["hist"]
         }
 
         search = GridSearchCV(
             self.model,
             param_grid,
             cv=3,
-            n_jobs=-1,
+            n_jobs=3,
             verbose=3,
             scoring="neg_root_mean_squared_error",
         )

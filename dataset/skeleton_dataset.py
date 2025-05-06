@@ -6,6 +6,14 @@ class Dataset(ABC):
         pass
 
     @abstractmethod
+    def get_feature_size() -> int:
+        """
+        Returns the size of the feature vector.
+        This method should be overridden by subclasses to provide a specific size.
+        """
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    @abstractmethod
     def get_csv_file_prefix(self) -> str:
         """
         Returns the prefix for the CSV file name.
