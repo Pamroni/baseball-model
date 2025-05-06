@@ -52,12 +52,12 @@ class LinearNN(torch.nn.Module):
             return torch.nn.ELU()
         else:
             raise ValueError(f"Unsupported activation function: {self.activation_type}")
-    
+
     def _init_weights(self):
         for m in self.modules():
             if isinstance(m, torch.nn.Linear):
                 if self.activation_type in ["RELU", "LEAKY_RELU"]:
-                    torch.nn.init.kaiming_normal_(m.weight, nonlinearity='leaky_relu')
+                    torch.nn.init.kaiming_normal_(m.weight, nonlinearity="leaky_relu")
                 elif self.activation_type == "TANH":
                     torch.nn.init.xavier_normal_(m.weight)
                 else:
@@ -209,14 +209,15 @@ class NNModel(Model):
                 total_predictions = len(X_eval)
                 with torch.no_grad():
                     for i, (features, label) in enumerate(zip(X_eval, y_eval)):
-                        home_team_won_predicted = self.did_home_team_win_features(features)
+                        home_team_won_predicted = self.did_home_team_win_features(
+                            features
+                        )
                         home_team_won_actual = label > 0
                         if home_team_won_predicted == home_team_won_actual:
                             correct_predictions += 1
 
                 accuracy = correct_predictions / total_predictions
                 print(f"Epoch {epoch+1} prediction accuracy: {accuracy:.2f}")
-
 
         print(f"Training completed with hyperparameters: {NN_HYPERPARAMS}")
 

@@ -33,6 +33,7 @@ SUPPORTED_YEARS = [
     "2024",
 ]
 
+
 class FangraphsDatasetReduced(Dataset):
     def __init__(self):
         super().__init__()
@@ -121,10 +122,7 @@ class FangraphsDatasetReduced(Dataset):
         for player_id in team_lineup:
             player_season = get_player_stats(player_id, team_batter_season)
             player_last_x = get_player_stats(player_id, team_batter_last_x)
-            if (
-                player_season is not None
-                and player_last_x is not None
-            ):
+            if player_season is not None and player_last_x is not None:
                 features.extend(player_season)
                 features.extend(player_last_x)
             else:

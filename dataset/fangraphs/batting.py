@@ -92,14 +92,14 @@ def get_two_year_stats(game_date, team):
         if team_cell:
             row_data = [cell.text.strip() for cell in row.find_all("td")]
             team_data.append(row_data)
-        
+
     team_df = pd.DataFrame(team_data, columns=ADVANCED_HITTING_COLUMNS)
-    team_df = team_df.drop(columns=['DELETE'])
+    team_df = team_df.drop(columns=["DELETE"])
 
     for col in ADVACNED_HITTING_PERCENT_COLUMNS:
         team_df[col] = team_df[col].apply(convert_percentage_to_float)
     team_df.iloc[:, 1:] = team_df.iloc[:, 1:].apply(pd.to_numeric)
-    return team_df    
+    return team_df
 
 
 def get_last_x_batter_stats(game_date, team, x_days_up_to=8):

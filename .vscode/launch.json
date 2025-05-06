@@ -43,6 +43,14 @@
             "python": "${workspaceFolder}/.venv/bin/python",
         },
         {
+            "name": "Debug Fangraphs Binary dataset",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "dataset.fangraphs.fangraphs_dataset_binary",
+            "justMyCode": false,
+            "python": "${workspaceFolder}/.venv/bin/python",
+        },
+        {
             "name": "Debug Model train",
             "type": "debugpy",
             "request": "launch",

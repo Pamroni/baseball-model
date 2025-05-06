@@ -34,6 +34,7 @@ SUPPORTED_YEARS = [
     "2024",
 ]
 
+
 class FangraphsLineupAverageDataset(Dataset):
     def __init__(self):
         super().__init__()
@@ -132,7 +133,7 @@ class FangraphsLineupAverageDataset(Dataset):
             lineup_last_x.append(player_last_x)
             player_two_year = get_player_stats(player_id, team_two_year_stats)
             lineup_last_two.append(player_two_year)
-        
+
         # Average the lineup features
         lineup_season_array = np.array(lineup_season).mean(axis=0).tolist()
         lineup_last_x_array = np.array(lineup_last_x).mean(axis=0).tolist()

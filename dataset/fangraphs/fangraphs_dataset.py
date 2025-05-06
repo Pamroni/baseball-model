@@ -33,6 +33,7 @@ SUPPORTED_YEARS = [
     "2024",
 ]
 
+
 class FangraphsDataset(Dataset):
     def __init__(self):
         super().__init__()

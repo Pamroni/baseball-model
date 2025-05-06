@@ -18,13 +18,17 @@ def get_season_games(year, skip_games=None):
             if len(start_date) == 1:
                 start_date = "0" + start_date
 
-
         games = statsapi.schedule(
-            start_date=f"{month}/{start_date}/{year}", end_date=f"{month}/{end_day}/{year}"
+            start_date=f"{month}/{start_date}/{year}",
+            end_date=f"{month}/{end_day}/{year}",
         )
         for game in games:
             game_id = game["game_id"]
-            if game["game_type"] == "R":
+            if (
+                game["game_type"] == "R"
+                and game["status"] == "Final"
+                and game["away_score"] != game["home_score"]
+            ):
                 game_ids.append(game_id)
 
     return game_ids
@@ -57,6 +61,7 @@ def get_home_lineup(game_response):
     else:
         home_starting_pitcher_id = None
     return home_lineup, home_starting_pitcher_id
+
 
 def get_response_date(game_response):
     date = game_response["gameData"]["datetime"]["officialDate"]

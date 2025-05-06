@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSe
 
 xgb_base_params = {"random_state": 42, "tree_method": "hist"}
 
+
 class XGBFangraphsModel(Model):
     def __init__(self, model: xgb.XGBRegressor = None):
         if model is None:
@@ -21,7 +22,7 @@ class XGBFangraphsModel(Model):
         model = xgb.XGBRegressor()
         model.load_model(path)
         return XGBFangraphsModel(model)
-    
+
     def save_model(self):
         self.model.save_model(self.path)
 
@@ -29,15 +30,15 @@ class XGBFangraphsModel(Model):
         features = self.dataset.generate_features(game_id)
 
         return self.model.predict(features)
-    
+
     def did_home_team_win(self, game_id) -> bool:
         features = self.dataset.generate_features(game_id)
         return self.did_home_team_win_features(features)
-    
+
     def did_home_team_win_features(self, features) -> bool:
         prediction = self.model.predict([features])
         return prediction > 0
-    
+
     def get_hyperparameters(self, X_train, y_train):
         return {
             "n_estimators": 1000,
@@ -45,7 +46,7 @@ class XGBFangraphsModel(Model):
             "learning_rate": 0.1,
             "subsample": 0.8,
             "colsample_bytree": 0.8,
-            "tree_method": "hist"
+            "tree_method": "hist",
         }
         param_grid = {
             "n_estimators": [100],
@@ -53,7 +54,7 @@ class XGBFangraphsModel(Model):
             "learning_rate": [0.01, 0.1, 0.2],
             "subsample": [0.8, 1.0],
             "colsample_bytree": [0.8, 1.0],
-            "tree_method": ["hist"]
+            "tree_method": ["hist"],
         }
 
         search = GridSearchCV(
@@ -66,7 +67,7 @@ class XGBFangraphsModel(Model):
         )
         search.fit(X_train, y_train)
         return search.best_params_
-    
+
     def train(self):
         X = []
         y = []
@@ -74,7 +75,7 @@ class XGBFangraphsModel(Model):
             features, labels = self.dataset.load_training_data(year)
             X.extend(features)
             y.extend(labels)
-        
+
         X_train, X_eval, y_train, y_eval = train_test_split(X, y, test_size=0.2)
         print(f"Training samples: {len(X_train)}")
         print(f"Evaluation samples: {len(X_eval)}")
@@ -96,5 +97,3 @@ class XGBFangraphsModel(Model):
 
         accuracy = correct_predictions / total_predictions
         print(f"Prediction accuracy: {accuracy:.2f}")
-        
-
