@@ -19,6 +19,13 @@
             "python": "${workspaceFolder}/.venv/bin/python",
         },
         {
+            "name": "Debug Binary Neural Network training",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "model.nn.nn_binary_model",
+            "python": "${workspaceFolder}/.venv/bin/python",
+        },
+        {
             "name": "Data generate",
             "type": "debugpy",
             "request": "launch",
