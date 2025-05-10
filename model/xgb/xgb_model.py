@@ -1,10 +1,12 @@
 from ..skeleton_model import Model
 from dataset.fangraphs.fangraphs_dataset import FangraphsDataset, SUPPORTED_YEARS
+from dataset.fangraphs.fangraphs_dataset_reduced import FangraphsDatasetReduced
 import xgboost as xgb
 
 from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 
-xgb_base_params = {"random_state": 42}
+xgb_base_params = {"random_state": 42, "tree_method": "hist"}
+
 
 class XGBFangraphsModel(Model):
     def __init__(self, model: xgb.XGBRegressor = None):
@@ -12,7 +14,7 @@ class XGBFangraphsModel(Model):
             self.model = xgb.XGBRegressor(**xgb_base_params)
         else:
             self.model = model
-        self.dataset = FangraphsDataset()
+        self.dataset = FangraphsDatasetReduced()
         self.path = "./model/xgb/xgb_model.json"
 
     @staticmethod
@@ -20,7 +22,7 @@ class XGBFangraphsModel(Model):
         model = xgb.XGBRegressor()
         model.load_model(path)
         return XGBFangraphsModel(model)
-    
+
     def save_model(self):
         self.model.save_model(self.path)
 
@@ -28,35 +30,44 @@ class XGBFangraphsModel(Model):
         features = self.dataset.generate_features(game_id)
 
         return self.model.predict(features)
-    
+
     def did_home_team_win(self, game_id) -> bool:
         features = self.dataset.generate_features(game_id)
         return self.did_home_team_win_features(features)
-    
+
     def did_home_team_win_features(self, features) -> bool:
         prediction = self.model.predict([features])
         return prediction > 0
-    
+
     def get_hyperparameters(self, X_train, y_train):
+        return {
+            "n_estimators": 1000,
+            "max_depth": 5,
+            "learning_rate": 0.1,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "tree_method": "hist",
+        }
         param_grid = {
-            "n_estimators": [100, 200],
-            "max_depth": [3, 5, 7],
+            "n_estimators": [100],
+            "max_depth": [5, 7],
             "learning_rate": [0.01, 0.1, 0.2],
             "subsample": [0.8, 1.0],
             "colsample_bytree": [0.8, 1.0],
+            "tree_method": ["hist"],
         }
 
         search = GridSearchCV(
             self.model,
             param_grid,
             cv=3,
-            n_jobs=-1,
+            n_jobs=3,
             verbose=3,
             scoring="neg_root_mean_squared_error",
         )
         search.fit(X_train, y_train)
         return search.best_params_
-    
+
     def train(self):
         X = []
         y = []
@@ -64,7 +75,7 @@ class XGBFangraphsModel(Model):
             features, labels = self.dataset.load_training_data(year)
             X.extend(features)
             y.extend(labels)
-        
+
         X_train, X_eval, y_train, y_eval = train_test_split(X, y, test_size=0.2)
         print(f"Training samples: {len(X_train)}")
         print(f"Evaluation samples: {len(X_eval)}")
@@ -86,5 +97,3 @@ class XGBFangraphsModel(Model):
 
         accuracy = correct_predictions / total_predictions
         print(f"Prediction accuracy: {accuracy:.2f}")
-        
-

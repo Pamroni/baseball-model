@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, List
 
+
 class Model(ABC):
     def __init__(self):
         pass
@@ -33,7 +34,7 @@ class Model(ABC):
         Given the game_id, return True if the home team won, False otherwise.
         """
         raise NotImplementedError("Subclasses should implement this method.")
-    
+
     @abstractmethod
     def get_prediction(game_id) -> float:
         """

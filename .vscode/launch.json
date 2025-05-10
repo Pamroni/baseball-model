@@ -12,64 +12,18 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Neural Network training",
+            "name": "Debug Neural Network training",
             "type": "debugpy",
             "request": "launch",
-            "module": "nn_train",
+            "module": "model.nn.nn_model",
             "python": "${workspaceFolder}/.venv/bin/python",
-            "args": [
-                "--training_data",
-                "./csv_data/fixed_2021_data.csv",
-                "./csv_data/fixed_2022_data.csv",
-                "./csv_data/fixed_2023_data.csv",
-                "--eval_data",
-                "./csv_data/fixed_2024_data.csv",
-            ]
         },
         {
-            "name": "Neural Network Full data",
+            "name": "Debug Binary Neural Network training",
             "type": "debugpy",
             "request": "launch",
-            "module": "nn_train",
+            "module": "model.nn.nn_binary_model",
             "python": "${workspaceFolder}/.venv/bin/python",
-            "args": [
-                "--full_data",
-                "./csv_data/fixed_2021_data.csv",
-                "./csv_data/fixed_2022_data.csv",
-                "./csv_data/fixed_2023_data.csv",
-                "./csv_data/fixed_2024_data.csv",
-            ]
-        },
-        {
-            "name": "XGBoost training",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "xgboost_train",
-            "python": "${workspaceFolder}/.venv/bin/python",
-            "args": [
-                "--training_data",
-                "./csv_data/fixed_2022_data.csv",
-                "./csv_data/fixed_2023_data.csv",
-                "./csv_data/fixed_2021_data.csv",
-                "./csv_data/fixed_2019_data.csv",
-                "--eval_data",
-                "./csv_data/fixed_2024_data.csv",
-            ]
-        },
-        {
-            "name": "XGBoost Full Data",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "xgboost_train",
-            "python": "${workspaceFolder}/.venv/bin/python",
-            "args": [
-                "--full_data",
-                "./csv_data/2019_data.csv",
-                "./csv_data/2021_data.csv",
-                "./csv_data/2022_data.csv",
-                "./csv_data/2023_data.csv",
-                "./csv_data/2024_data.csv",
-            ]
         },
         {
             "name": "Data generate",
@@ -84,6 +38,22 @@
             "type": "debugpy",
             "request": "launch",
             "module": "dataset.fangraphs.fangraphs_dataset",
+            "justMyCode": false,
+            "python": "${workspaceFolder}/.venv/bin/python",
+        },
+        {
+            "name": "Debug Fangraphs Averaged dataset",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "dataset.fangraphs.fangraphs_dataset_lineup_average",
+            "justMyCode": false,
+            "python": "${workspaceFolder}/.venv/bin/python",
+        },
+        {
+            "name": "Debug Fangraphs Binary dataset",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "dataset.fangraphs.fangraphs_dataset_binary",
             "justMyCode": false,
             "python": "${workspaceFolder}/.venv/bin/python",
         },
