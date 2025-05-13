@@ -9,15 +9,31 @@ from .fangraphs.fangraphs_dataset_reduced import FangraphsDatasetReduced
 from .fangraphs.fangraphs_dataset_lineup_average import FangraphsLineupAverageDataset
 from .fangraphs.fangraphs_dataset_binary import FangraphsBinaryDataset
 
-COOLDOWN_TIME = 1
-REQUESTS_ERROR_RETRY = 5
+COOLDOWN_TIME = 0
+REQUESTS_ERROR_RETRY = 3
 
 GAME_ID_CSV_INDEX = 0
 
+DATASET_CHOICES = [
+    "fangraphs_advanced",
+    "fangraphs_advanced_reduced",
+    "fangraphs_advanced_lineup_average",
+    "fangraphs_binary",
+]
 
 def get_filename(year, prefix):
     return f"{prefix}_{year}.csv"
 
+def remove_nan_from_csv(csv_file):
+    df = pd.read_csv(csv_file, header=None)
+    rows_before = len(df)
+    # Remove rows with NaN values
+    df = df.dropna()
+    rows_after = len(df)
+    print(f"Removed {rows_before - rows_after} rows with NaN values from {csv_file}")
+    # Save the cleaned DataFrame back to the CSV file
+    df.to_csv(csv_file, index=False, header=False)
+    print(f"Removed NaN values from {csv_file}")
 
 def get_csv_dataframe(file_name):
     try:
@@ -36,7 +52,7 @@ def write_to_csv(game_id, label, features, csv_file):
         f.write(",".join(map(str, csv_data)) + "\n")
 
 
-def process_year(year, dataset_name):
+def process_year(year, dataset_name, fix=False):
     # parse args
     dataset = None
     if dataset_name == "fangraphs_advanced":
@@ -52,6 +68,7 @@ def process_year(year, dataset_name):
 
     print(f"Using dataset {dataset_name}")
     print(f"Generating data for {year}")
+    print(f"Fix mode? {fix}")
     # Get all games for a season
     start = time.time()
     season_game_ids = get_season_games(year, skip_games=15)
@@ -59,6 +76,11 @@ def process_year(year, dataset_name):
         f"Found {len(season_game_ids)} games in {time.time()-start} seconds for {year}"
     )
     csv_file = get_filename(year, dataset.get_csv_file_prefix())
+    if fix:
+        # Remove NaN values from the CSV file
+        remove_nan_from_csv(csv_file)
+        print(f"Removed NaN values from {csv_file} - attempting to regenerate them")
+
     # Load into Pandas to make sure we dont duplicate
     for game_id in tqdm(season_game_ids):
         retries = 0
@@ -90,7 +112,11 @@ def process_year(year, dataset_name):
                 f"Failed to process game {game_id} after {REQUESTS_ERROR_RETRY} retries"
             )
 
-    print(f"Finished generating data for {year} in {time.time()-start} seconds")
+    
+    # Check how many are NAN
+    game_data_df = get_csv_dataframe(csv_file)
+    nan_rows = len(game_data_df) - len(game_data_df.dropna()) 
+    print(f"Finished generating data for {year} in {time.time()-start} seconds. Left with {nan_rows} NAN rows")
 
 
 if __name__ == "__main__":
@@ -99,12 +125,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=[
-            "fangraphs_advanced",
-            "fangraphs_advanced_reduced",
-            "fangraphs_advanced_lineup_average",
-            "fangraphs_binary",
-        ],
+        choices=DATASET_CHOICES,
         default="fangraphs_advanced",
         help="Dataset to use (e.g., fangraphs_advanced, fangraphs_advanced_reduced, fangraphs_advanced_lineup_average, fangraphs_binary)",
     )
@@ -112,6 +133,11 @@ if __name__ == "__main__":
         "--threaded",
         action="store_true",
         help="Enable multithreading for processing years.",
+    )
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Remove NAN for dataset",
     )
     parser.add_argument(
         "--years",
@@ -124,9 +150,9 @@ if __name__ == "__main__":
     if args.threaded:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             executor.map(
-                lambda year: process_year(year=year, dataset_name=args.dataset),
+                lambda year: process_year(year=year, dataset_name=args.dataset, fix=args.fix),
                 args.years,
             )
     else:
         for year in args.years:
-            process_year(year=year, dataset_name=args.dataset)
+            process_year(year=year, dataset_name=args.dataset, fix=args.fix)
