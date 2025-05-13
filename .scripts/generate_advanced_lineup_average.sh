@@ -1,0 +1,1 @@
+/home/alex/baseball-model/.venv/bin/python3 -m dataset.generator --dataset fangraphs_advanced_lineup_average --threaded --fix
