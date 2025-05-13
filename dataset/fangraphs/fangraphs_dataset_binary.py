@@ -42,8 +42,10 @@ class FangraphsBinaryDataset(Dataset):
         self.starting_pitcher_days = 14
 
     def get_feature_size(self):
-        features = self.generate_features(661527)
-        return len(features)
+        # features = self.generate_features(661527)
+        # return len(features)
+        features_len = 1016
+        return features_len
 
     def get_csv_file_prefix(self) -> str:
         return self.csv_file_prefix
@@ -52,6 +54,13 @@ class FangraphsBinaryDataset(Dataset):
         file_path = f"{self.csv_file_prefix}_{year}.csv"
         try:
             df = pd.read_csv(file_path, header=None)
+            initial_rows = len(df)
+            df = df.dropna()
+            final_rows = len(df)
+            if initial_rows != final_rows:
+                print(
+                    f"Dropped {initial_rows - final_rows} rows with NaN values from {file_path}"
+                )
             features = df.iloc[:, 2:].values.tolist()
             labels = df.iloc[:, 1].values.tolist()
             return features, labels
@@ -183,4 +192,4 @@ class FangraphsBinaryDataset(Dataset):
 
 if __name__ == "__main__":
     dataset = FangraphsBinaryDataset()
-    dataset.generate_csv_data(661527)
+    dataset.generate_csv_data(745334)

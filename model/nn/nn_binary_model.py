@@ -9,9 +9,11 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
 NN_HYPERPARAMS = {
-    "learning_rate": 0.1,
+    "learning_rate": 0.001,
     "batch_size": 16,
-    "epochs": 10000,
+    "epochs": 1000,
+    "weight_decay": 1e-5,
+    "eps": 1e-8,
 }
 
 
@@ -20,8 +22,9 @@ class LinearNN(torch.nn.Module):
         self,
         input_size: int,
         output_size: int,
-        activation="TANH",
-        layers=[256, 128, 64],
+        activation="LEAKY_RELU",
+        layers=[512, 128, 32],
+        dropout_rate=0.40,
     ):
         super(LinearNN, self).__init__()
 
@@ -29,15 +32,22 @@ class LinearNN(torch.nn.Module):
         print(f"Using activation function: {activation} with layers: {layers}")
 
         layer_list = []
+        # layer_list.append(torch.nn.LayerNorm(input_size))
         layer_list.append(torch.nn.Linear(input_size, layers[0]))
+        # layer_list.append(torch.nn.LayerNorm(layers[0]))
         layer_list.append(self._get_activation())
+        if dropout_rate is not None:
+            layer_list.append(torch.nn.Dropout(dropout_rate))
 
         for i in range(len(layers) - 1):
             layer_list.append(torch.nn.Linear(layers[i], layers[i + 1]))
+            # layer_list.append(torch.nn.LayerNorm(layers[i + 1]))
             layer_list.append(self._get_activation())
+            if dropout_rate is not None:
+                layer_list.append(torch.nn.Dropout(dropout_rate))
 
         layer_list.append(torch.nn.Linear(layers[-1], output_size))
-        layer_list.append(torch.nn.Tanh())
+        # layer_list.append(torch.nn.Softsign())
         self.model = torch.nn.Sequential(*layer_list)
         self._init_weights()
 
@@ -58,12 +68,7 @@ class LinearNN(torch.nn.Module):
     def _init_weights(self):
         for m in self.modules():
             if isinstance(m, torch.nn.Linear):
-                if self.activation_type in ["RELU", "LEAKY_RELU"]:
-                    torch.nn.init.kaiming_normal_(m.weight, nonlinearity="leaky_relu")
-                elif self.activation_type == "TANH":
-                    torch.nn.init.xavier_normal_(m.weight)
-                else:
-                    torch.nn.init.xavier_normal_(m.weight)
+                torch.nn.init.kaiming_normal_(m.weight, nonlinearity="relu", a=0.1)
                 if m.bias is not None:
                     torch.nn.init.zeros_(m.bias)
 
@@ -92,7 +97,7 @@ class NNModel(Model):
         else:
             self.model = model
 
-        self.path = "./model/nn/nn_model.pt"
+        self.path = "./model/nn/nn_model_binary.pt"
         self.optimizer = None
         self.criterion = torch.nn.MSELoss()
 
@@ -133,14 +138,69 @@ class NNModel(Model):
         features = self.dataset.generate_features(game_id)
         return self.did_home_team_win_features(features)
 
-    def did_home_team_win_features(self, features) -> bool:
+    def did_home_team_win_features(self, features, threshold=0.0) -> bool:
         features_tensor = torch.FloatTensor([features]).to(self.device)
 
         self.model.eval()
         with torch.no_grad():
             prediction = self.model(features_tensor).item()
 
-        return prediction > 0
+        if abs(prediction) <= abs(threshold):
+            return None # NO VOTE
+        
+        if prediction < -1*threshold:
+            return False
+        elif prediction > threshold:
+            return True
+        
+    def run_eval(self, X_eval, y_eval):
+        print(f"\n*****")
+        self.model.eval()
+        best_accuracy = 0.0
+        best_threshold = 0.0
+        for threshold in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]:
+            correct_predictions = 0
+            total_predictions = 0
+            home_predictions = 0
+            home_actual = 0
+            away_predictions = 0
+            away_actual = 0
+            with torch.no_grad():
+                for i, (features, label) in enumerate(zip(X_eval, y_eval)):
+                    home_team_won_predicted = self.did_home_team_win_features(
+                        features, threshold=threshold
+                    )
+                    if home_team_won_predicted is not None:
+                        total_predictions += 1
+                        home_team_won_actual = label > 0
+                        if home_team_won_predicted == home_team_won_actual:
+                            correct_predictions += 1
+
+                        if home_team_won_predicted:
+                            home_predictions += 1
+                        if home_team_won_actual:
+                            home_actual += 1
+                        if not home_team_won_predicted:
+                            away_predictions += 1
+                        if not home_team_won_actual:
+                            away_actual += 1
+                        
+
+            if total_predictions == 0:
+                accuracy = 0.0
+
+            else:
+                accuracy = correct_predictions / total_predictions
+            
+            print(f"Eval accuracy w/ t={threshold}: {accuracy:.2f} - {total_predictions} predictions")
+            print(f"Home predictions: {home_predictions} - Home actual: {home_actual}")
+            print(f"Away predictions: {away_predictions} - Away actual: {away_actual}")
+            if accuracy > best_accuracy:
+                best_accuracy = accuracy
+                best_threshold = threshold
+        print(f"Best prediction accuracy: {best_accuracy:.2f} with threshold {best_threshold}")
+        print(f"*****\n")
+
 
     def train(self):
         X = []
@@ -173,26 +233,45 @@ class NNModel(Model):
         self.optimizer = torch.optim.Adam(
             self.model.parameters(),
             lr=NN_HYPERPARAMS["learning_rate"],
-            # weight_decay=NN_HYPERPARAMS["weight_decay"],
+            weight_decay=NN_HYPERPARAMS["weight_decay"],
+            eps=NN_HYPERPARAMS["eps"],
         )
 
-        # Training loop
-        self.model.train()
-        for epoch in range(NN_HYPERPARAMS["epochs"]):
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer,
+            mode="min",
+            patience=5,
+            factor=0.5,
+            verbose=True,
+        )
+
+        for epoch in tqdm(range(NN_HYPERPARAMS["epochs"])):
+            self.model.train()
             epoch_loss = 0.0
+            nan_encountered = False
+            
             for batch_X, batch_y in train_loader:
                 # Forward pass
                 self.optimizer.zero_grad()
                 outputs = self.model(batch_X)
                 loss = self.criterion(outputs, batch_y)
 
+                if torch.isnan(loss):
+                    print(f" Epoch {epoch} Loss is NaN, stopping training.")
+                    nan_encountered = True
+                    continue
+
                 # Backward pass and optimize
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.5)
                 self.optimizer.step()
 
                 epoch_loss += loss.item()
+            
+            if nan_encountered:
+                continue
 
-            # Print progress every 10 epochs
+            # Print progress every 25 epochs
             if (epoch + 1) % 10 == 0:
                 self.model.eval()
                 with torch.no_grad():
@@ -203,40 +282,13 @@ class NNModel(Model):
                         f"Train Loss: {epoch_loss/len(train_loader):.4f}, "
                         f"Eval Loss: {eval_loss.item():.4f}"
                     )
+
+                self.run_eval(X_eval, y_eval)
                 self.model.train()
 
-            if (epoch + 1) % 100 == 0:
-                # Do the prediction accuracy check
-                correct_predictions = 0
-                total_predictions = len(X_eval)
-                with torch.no_grad():
-                    for i, (features, label) in enumerate(zip(X_eval, y_eval)):
-                        home_team_won_predicted = self.did_home_team_win_features(
-                            features
-                        )
-                        home_team_won_actual = label > 0
-                        if home_team_won_predicted == home_team_won_actual:
-                            correct_predictions += 1
-
-                accuracy = correct_predictions / total_predictions
-                print(f"Epoch {epoch+1} prediction accuracy: {accuracy:.2f}")
-
         print(f"Training completed with hyperparameters: {NN_HYPERPARAMS}")
-
-        print(f"Evaluating prediction accuracy on evaluation set")
-        self.model.eval()
-        correct_predictions = 0
-        total_predictions = len(X_eval)
-
-        with torch.no_grad():
-            for i, (features, label) in enumerate(zip(X_eval, y_eval)):
-                home_team_won_predicted = self.did_home_team_win_features(features)
-                home_team_won_actual = label > 0
-                if home_team_won_predicted == home_team_won_actual:
-                    correct_predictions += 1
-
-        accuracy = correct_predictions / total_predictions
-        print(f"Prediction accuracy: {accuracy:.2f}")
+        print(f"Evaluating final prediction accuracy on evaluation set")
+        self.run_eval(X_eval, y_eval)
         self.save_model()
 
 
