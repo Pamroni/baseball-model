@@ -15,7 +15,7 @@ class HuberFangraphsModel(Model):
         else:
             self.model = model
         self.dataset = FangraphsDatasetReduced()
-        self.path = "./model/xgb/xgb_model.json"
+        self.path = "./model/scikit/huber_model.pkl"
 
     @staticmethod
     def load_model(path: str):
@@ -39,20 +39,38 @@ class HuberFangraphsModel(Model):
         return prediction > 0
 
     def get_hyperparameters(self, X_train, y_train):
+        return {
+            "epsilon": 2.0,
+            "max_iter": 50000,
+            "alpha": 0.001,
+            "tol": 1e-4,
+        }
         param_grid = {
             "epsilon": [0.1, 0.5, 1.0, 1.1, 1.35, 1.5, 1.75, 2.0, 2.25, 2.5],
-            "max_iter": [500, 1000, 1100, 1200, 1300, 1400, 1500],
+            "max_iter": [1000, 1300, 1400, 1500, 2000, 3000, 5000, 10000],
             "alpha": [0.0001, 0.001, 0.01, 0.1, 1],
             "tol": [1e-4, 1e-3, 1e-2, 1e-1],
         }
-        search = GridSearchCV(
+        search = RandomizedSearchCV(
             self.model,
-            param_grid,
+            param_distributions=param_grid,
+            n_iter=1000,
             cv=3,
-            n_jobs=3,
+            n_jobs=5,
             verbose=3,
             scoring="neg_root_mean_squared_error",
         )
+
+        # search = GridSearchCV(
+        #     self.model,
+        #     param_grid,
+        #     cv=3,
+        #     n_jobs=5,
+        #     verbose=3,
+        #     scoring="neg_root_mean_squared_error",
+        # )
+
+
         search.fit(X_train, y_train)
         return search.best_params_
 
