@@ -52,6 +52,13 @@ class FangraphsDatasetReduced(Dataset):
         file_path = f"{self.csv_file_prefix}_{year}.csv"
         try:
             df = pd.read_csv(file_path, header=None)
+            initial_rows = len(df)
+            df = df.dropna()
+            final_rows = len(df)
+            if initial_rows != final_rows:
+                print(
+                    f"Dropped {initial_rows - final_rows} rows with NaN values from {file_path}"
+                )
             features = df.iloc[:, 2:].values.tolist()
             labels = df.iloc[:, 1].values.tolist()
             return features, labels
