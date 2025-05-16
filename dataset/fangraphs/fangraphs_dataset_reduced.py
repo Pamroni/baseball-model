@@ -48,7 +48,7 @@ class FangraphsDatasetReduced(Dataset):
     def get_csv_file_prefix(self) -> str:
         return self.csv_file_prefix
 
-    def load_training_data(self, year: str):
+    def load_training_data(self, year: str, no_zeros = False):
         file_path = f"{self.csv_file_prefix}_{year}.csv"
         try:
             df = pd.read_csv(file_path, header=None)
@@ -61,6 +61,13 @@ class FangraphsDatasetReduced(Dataset):
                 )
             features = df.iloc[:, 2:].values.tolist()
             labels = df.iloc[:, 1].values.tolist()
+
+            if no_zeros:
+                # add 1e-9 to any zero value
+                features = [
+                    [feature + 1e-9 if feature == 0 else feature for feature in row]
+                    for row in features
+                ]
             return features, labels
         except FileNotFoundError as e:
             print(f"File {file_path} not found.")

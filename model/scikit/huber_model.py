@@ -1,4 +1,5 @@
 import joblib
+import json
 from sklearn.linear_model import HuberRegressor
 from ..skeleton_model import Model
 from dataset.fangraphs.fangraphs_dataset import FangraphsDataset, SUPPORTED_YEARS
@@ -39,46 +40,33 @@ class HuberFangraphsModel(Model):
         return prediction > 0
 
     def get_hyperparameters(self, X_train, y_train):
-        return {
-            "epsilon": 2.0,
-            "max_iter": 50000,
-            "alpha": 0.001,
-            "tol": 1e-4,
-        }
         param_grid = {
-            "epsilon": [0.1, 0.5, 1.0, 1.1, 1.35, 1.5, 1.75, 2.0, 2.25, 2.5],
-            "max_iter": [1000, 1300, 1400, 1500, 2000, 3000, 5000, 10000],
+            "epsilon": [0.0, 0.1, 0.5, 1.0, 1.1, 1.35, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0],
+            "max_iter": [1000, 2000, 5000, 10000, 15000, 20000],
             "alpha": [0.0001, 0.001, 0.01, 0.1, 1],
             "tol": [1e-4, 1e-3, 1e-2, 1e-1],
         }
-        search = RandomizedSearchCV(
+        search = GridSearchCV(
             self.model,
-            param_distributions=param_grid,
-            n_iter=1000,
+            param_grid,
             cv=3,
-            n_jobs=5,
+            n_jobs=10,
             verbose=3,
             scoring="neg_root_mean_squared_error",
         )
 
-        # search = GridSearchCV(
-        #     self.model,
-        #     param_grid,
-        #     cv=3,
-        #     n_jobs=5,
-        #     verbose=3,
-        #     scoring="neg_root_mean_squared_error",
-        # )
-
-
         search.fit(X_train, y_train)
+
+        print(f"Best hyperparameters: {search.best_params_}")
+        with open("./model/scikit/huber_model_hyperparameters.json", "w") as f:
+            f.write(json.dumps(search.best_params_, indent=4))
         return search.best_params_
 
     def train(self):
         X = []
         y = []
         for year in SUPPORTED_YEARS:
-            features, labels = self.dataset.load_training_data(year)
+            features, labels = self.dataset.load_training_data(year, no_zeros=True)
             X.extend(features)
             y.extend(labels)
 
